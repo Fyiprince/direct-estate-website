@@ -22,6 +22,7 @@ import {
   ArrowRight,
   Loader2,
   Mail,
+  Phone,
   UserX,
   Building2,
   Search,
@@ -51,9 +52,13 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
     searchParams.get("returnTo"),
     redirectAfterAuth,
   );
-  const [step, setStep] = useState<"signIn" | { email: string } | "role">(
-    "signIn",
-  );
+  const [step, setStep] = useState<
+    | "signIn"
+    | { method: "email"; email: string }
+    | { method: "phone"; phone: string }
+    | "role"
+  >("signIn");
+  const [method, setMethod] = useState<"email" | "phone">("email");
   const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -62,6 +67,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
   // (useAuth user is loaded into this component via the parent)
   const setRole = useMutation(api.profile.setRole);
   const claimAdmin = useMutation(api.profile.claimAdmin);
+  const setPhone = useMutation(api.profile.setPhone);
 
   // Existing admins skip the role picker and go straight to the approval queue.
   useEffect(() => {
@@ -89,10 +95,43 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
     try {
       const formData = new FormData(event.currentTarget);
       await signIn("email-otp", formData);
-      setStep({ email: formData.get("email") as string });
+      setStep({ method: "email", email: formData.get("email") as string });
       setIsLoading(false);
     } catch (error) {
       console.error("Email sign-in error:", error);
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Failed to send verification code. Please try again.",
+      );
+      setIsLoading(false);
+    }
+  };
+
+  const handlePhoneSubmit = async (
+    event: React.FormEvent<HTMLFormElement>,
+  ) => {
+    event.preventDefault();
+    setIsLoading(true);
+    setError(null);
+    try {
+      const formData = new FormData(event.currentTarget);
+      const countryCode = (formData.get("countryCode") as string) || "+91";
+      const digits = ((formData.get("phone") as string) || "").replace(
+        /\D/g,
+        "",
+      );
+      if (digits.length < 7 || digits.length > 15) {
+        throw new Error("Enter a valid phone number");
+      }
+      const phone = `${countryCode}${digits}`;
+      const payload = new FormData();
+      payload.set("phone", phone);
+      await signIn("phone-otp", payload);
+      setStep({ method: "phone", phone });
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Phone sign-in error:", error);
       setError(
         error instanceof Error
           ? error.message
@@ -110,7 +149,11 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
     setError(null);
     try {
       const formData = new FormData(event.currentTarget);
-      await signIn("email-otp", formData);
+      const provider =
+        typeof step === "object" && step.method === "phone"
+          ? "phone-otp"
+          : "email-otp";
+      await signIn(provider, formData);
       setIsLoading(false);
 
       // If this email is in the admin allowlist, promote the account and
@@ -120,7 +163,17 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
         navigate("/admin");
         return;
       } catch {
-        // Not an admin — fall through to the role picker below.
+        // Not an admin — fall through below.
+      }
+
+      // Phone sign-in verifies the number — persist it as the contact phone
+      // so admins can reach owners who list property.
+      if (typeof step === "object" && step.method === "phone") {
+        try {
+          await setPhone({ phone: step.phone });
+        } catch (err) {
+          console.error("Failed to save phone number:", err);
+        }
       }
       setStep("role");
     } catch (error) {
@@ -183,81 +236,189 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
                   </div>
                   <CardTitle className="text-xl">Get Started</CardTitle>
                   <CardDescription>
-                    Enter your email to log in or sign up
+                    {method === "phone"
+                      ? "Enter your phone number to log in or sign up"
+                      : "Enter your email to log in or sign up"}
                   </CardDescription>
                 </CardHeader>
-                <form onSubmit={handleEmailSubmit}>
-                  <CardContent>
-                    <div className="relative flex items-center gap-2">
-                      <div className="relative flex-1">
-                        <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          name="email"
-                          placeholder="name@example.com"
-                          type="email"
-                          className="pl-9"
+
+                {/* Email / Phone method tabs */}
+                <div className="px-6">
+                  <div className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1">
+                    <button
+                      type="button"
+                      onClick={() => setMethod("email")}
+                      className={cn(
+                        "flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                        method === "email"
+                          ? "bg-background text-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      <Mail className="h-4 w-4" />
+                      Email
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMethod("phone")}
+                      className={cn(
+                        "flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                        method === "phone"
+                          ? "bg-background text-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      <Phone className="h-4 w-4" />
+                      Phone
+                    </button>
+                  </div>
+                </div>
+
+                {method === "email" ? (
+                  <form onSubmit={handleEmailSubmit}>
+                    <CardContent className="pt-4">
+                      <div className="relative flex items-center gap-2">
+                        <div className="relative flex-1">
+                          <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            name="email"
+                            placeholder="name@example.com"
+                            type="email"
+                            className="pl-9"
+                            disabled={isLoading}
+                            required
+                          />
+                        </div>
+                        <Button
+                          type="submit"
+                          variant="outline"
+                          size="icon"
                           disabled={isLoading}
-                          required
-                        />
+                        >
+                          {isLoading ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <ArrowRight className="h-4 w-4" />
+                          )}
+                        </Button>
                       </div>
-                      <Button
-                        type="submit"
-                        variant="outline"
-                        size="icon"
-                        disabled={isLoading}
-                      >
-                        {isLoading ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <ArrowRight className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </div>
-                    {error && (
-                      <p className="mt-2 text-sm text-destructive">{error}</p>
-                    )}
-
-                    <div className="mt-4">
-                      <div className="relative">
-                        <div className="absolute inset-0 flex items-center">
-                          <span className="w-full border-t" />
+                      {error && (
+                        <p className="mt-2 text-sm text-destructive">
+                          {error}
+                        </p>
+                      )}
+                    </CardContent>
+                  </form>
+                ) : (
+                  <form onSubmit={handlePhoneSubmit}>
+                    <CardContent className="pt-4">
+                      <div className="flex items-center gap-2">
+                        <select
+                          name="countryCode"
+                          defaultValue="+91"
+                          className="h-9 shrink-0 rounded-md border border-input bg-background px-2 text-sm"
+                          aria-label="Country code"
+                        >
+                          <option value="+91">🇮🇳 +91</option>
+                          <option value="+1">🇺🇸 +1</option>
+                          <option value="+44">🇬🇧 +44</option>
+                          <option value="+61">🇦🇺 +61</option>
+                          <option value="+971">🇦🇪 +971</option>
+                          <option value="+65">🇸🇬 +65</option>
+                        </select>
+                        <div className="relative flex-1">
+                          <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            name="phone"
+                            type="tel"
+                            inputMode="numeric"
+                            placeholder="98765 43210"
+                            className="pl-9"
+                            disabled={isLoading}
+                            required
+                            pattern="[0-9]{7,15}"
+                            title="Enter a valid phone number"
+                          />
                         </div>
-                        <div className="relative flex justify-center text-xs uppercase">
-                          <span className="bg-background px-2 text-muted-foreground">
-                            Or
-                          </span>
-                        </div>
+                        <Button
+                          type="submit"
+                          variant="outline"
+                          size="icon"
+                          disabled={isLoading}
+                        >
+                          {isLoading ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <ArrowRight className="h-4 w-4" />
+                          )}
+                        </Button>
                       </div>
+                      {error && (
+                        <p className="mt-2 text-sm text-destructive">
+                          {error}
+                        </p>
+                      )}
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        We'll text you a 6-digit verification code. Standard
+                        SMS rates may apply.
+                      </p>
+                    </CardContent>
+                  </form>
+                )}
 
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="w-full mt-4"
-                        onClick={handleGuestLogin}
-                        disabled={isLoading}
-                      >
-                        <UserX className="mr-2 h-4 w-4" />
-                        Continue as Guest
-                      </Button>
+                <CardContent className="pt-0">
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t" />
                     </div>
-                  </CardContent>
-                </form>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-background px-2 text-muted-foreground">
+                        Or
+                      </span>
+                    </div>
+                  </div>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full mt-4"
+                    onClick={handleGuestLogin}
+                    disabled={isLoading}
+                  >
+                    <UserX className="mr-2 h-4 w-4" />
+                    Continue as Guest
+                  </Button>
+                </CardContent>
               </>
             ) : typeof step === "object" ? (
               <>
                 <CardHeader className="text-center mt-4">
-                  <CardTitle>Check your email</CardTitle>
+                  <CardTitle>
+                    {step.method === "phone"
+                      ? "Check your phone"
+                      : "Check your email"}
+                  </CardTitle>
                   <CardDescription>
-                    We've sent a code to {step.email}
+                    {step.method === "phone"
+                      ? `We've sent a 6-digit code to ${step.phone}`
+                      : `We've sent a code to ${step.email}`}
                   </CardDescription>
                 </CardHeader>
                 <form onSubmit={handleOtpSubmit}>
                   <CardContent className="pb-4">
-                    <input
-                      type="hidden"
-                      name="email"
-                      value={step.email}
-                    />
+                    {step.method === "phone" ? (
+                      <input
+                        type="hidden"
+                        name="phone"
+                        value={step.phone}
+                      />
+                    ) : (
+                      <input
+                        type="hidden"
+                        name="email"
+                        value={step.email}
+                      />
+                    )}
                     <input type="hidden" name="code" value={otp} />
 
                     <div className="flex justify-center">
@@ -327,7 +488,9 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
                       disabled={isLoading}
                       className="w-full"
                     >
-                      Use different email
+                      {step.method === "phone"
+                        ? "Use different number"
+                        : "Use different email"}
                     </Button>
                   </CardFooter>
                 </form>

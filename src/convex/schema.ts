@@ -77,12 +77,15 @@ const schema = defineSchema(
       image: v.optional(v.string()), // image of the user. do not remove
       email: v.optional(v.string()), // email of the user. do not remove
       emailVerificationTime: v.optional(v.number()), // email verification time. do not remove
+      phone: v.optional(v.string()), // contact number, masked in all API responses. do not remove
+      phoneVerificationTime: v.optional(v.number()), // phone verification time (phone OTP sign-in). do not remove
       isAnonymous: v.optional(v.boolean()), // is the user anonymous. do not remove
 
       role: v.optional(roleValidator), // OWNER | TENANT | ADMIN. do not remove
-      phone: v.optional(v.string()), // contact number, masked in all API responses
       isVerified: v.optional(v.boolean()), // identity-verified owner badge
-    }).index("email", ["email"]), // index for the email. do not remove or modify
+    })
+      .index("email", ["email"]) // index for the email. do not remove or modify
+      .index("phone", ["phone"]), // index for the verified phone. do not remove or modify
 
     // Property listings — one row per listed property.
     properties: defineTable({
