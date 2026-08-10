@@ -44,7 +44,7 @@ function resolveRedirectAfterAuth(
 }
 
 function Auth({ redirectAfterAuth }: AuthProps = {}) {
-  const { isLoading: authLoading, isAuthenticated, signIn } = useAuth();
+  const { isLoading: authLoading, isAuthenticated, user, signIn } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const redirect = resolveRedirectAfterAuth(
@@ -61,6 +61,14 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
   // After auth, check if user needs to pick a role
   // (useAuth user is loaded into this component via the parent)
   const setRole = useMutation(api.profile.setRole);
+  const claimAdmin = useMutation(api.profile.claimAdmin);
+
+  // Existing admins skip the role picker and go straight to the approval queue.
+  useEffect(() => {
+    if (!authLoading && isAuthenticated && user?.role === "admin") {
+      navigate("/admin");
+    }
+  }, [authLoading, isAuthenticated, user, navigate]);
 
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
@@ -104,6 +112,16 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
       const formData = new FormData(event.currentTarget);
       await signIn("email-otp", formData);
       setIsLoading(false);
+
+      // If this email is in the admin allowlist, promote the account and
+      // land directly on the pending-approval queue.
+      try {
+        await claimAdmin();
+        navigate("/admin");
+        return;
+      } catch {
+        // Not an admin — fall through to the role picker below.
+      }
       setStep("role");
     } catch (error) {
       console.error("OTP verification error:", error);

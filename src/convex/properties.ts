@@ -10,18 +10,22 @@ import {
   ROLES,
   sortValidator,
 } from "./schema";
-import { initials, maskPhone, propertyInputSchema } from "../lib/property";
+import { initials, propertyInputSchema } from "../lib/property";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-/** Owner summary — the full phone number is NEVER returned to the client. */
+/**
+ * Owner summary shown alongside a listing.
+ * The full phone number is ONLY populated for admin viewers — every other
+ * caller (renters, owners, anonymous) receives `phone: null`.
+ */
 export type OwnerSummary = {
   name: string;
   initials: string;
   isVerified: boolean;
-  phoneMasked: string | null;
+  phone: string | null;
 };
 
 export type PropertyWithOwner = Doc<"properties"> & { owner: OwnerSummary | null };
@@ -29,6 +33,7 @@ export type PropertyWithOwner = Doc<"properties"> & { owner: OwnerSummary | null
 async function ownerSummaryOf(
   ctx: QueryCtx,
   ownerId: Doc<"users">["_id"],
+  includeContact = false,
 ): Promise<OwnerSummary | null> {
   const owner = await ctx.db.get(ownerId);
   if (!owner) return null;
@@ -36,7 +41,7 @@ async function ownerSummaryOf(
     name: owner.name ?? "Verified owner",
     initials: initials(owner.name),
     isVerified: owner.isVerified ?? false,
-    phoneMasked: maskPhone(owner.phone),
+    phone: includeContact ? (owner.phone ?? null) : null,
   };
 }
 
@@ -119,7 +124,8 @@ export const search = query({
 /**
  * Single listing with owner summary.
  * Live listings are public. Pending/rejected listings are visible only to
- * the admin and to the owner who posted them.
+ * the admin and to the owner who posted them. The owner's full phone
+ * number is included ONLY when the viewer is an admin.
  */
 export const get = query({
   args: { id: v.id("properties") },
@@ -127,16 +133,17 @@ export const get = query({
     const property = await ctx.db.get(id);
     if (!property) return null;
 
+    const userId = await getAuthUserId(ctx);
+    const me = userId ? await ctx.db.get(userId) : null;
+    const isAdmin = me?.role === ROLES.ADMIN;
+
     if (property.status !== "live") {
-      const userId = await getAuthUserId(ctx);
       if (userId === null) return null;
-      const me = await ctx.db.get(userId);
-      const isAdmin = me?.role === ROLES.ADMIN;
       const isOwner = property.ownerId === userId;
       if (!isAdmin && !isOwner) return null;
     }
 
-    const owner = await ownerSummaryOf(ctx, property.ownerId);
+    const owner = await ownerSummaryOf(ctx, property.ownerId, isAdmin);
     return { ...property, owner } as PropertyWithOwner;
   },
 });

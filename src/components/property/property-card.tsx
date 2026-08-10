@@ -31,7 +31,7 @@ export type PropertyCardData = Doc<"properties"> & {
     name: string;
     initials: string;
     isVerified: boolean;
-    phoneMasked: string | null;
+    phone: string | null;
   } | null;
 };
 

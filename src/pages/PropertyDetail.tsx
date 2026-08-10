@@ -38,6 +38,7 @@ import {
   ChevronRight,
   ShieldCheck,
   Phone,
+  Lock,
   MessageCircle,
   Calendar,
   Building2,
@@ -75,9 +76,9 @@ export default function PropertyDetailPage() {
   }, [id, incrementView]);
 
   const handleCopyPhone = async () => {
-    if (property?.owner?.phoneMasked) {
+    if (property?.owner?.phone) {
       try {
-        await navigator.clipboard.writeText(property.owner.phoneMasked);
+        await navigator.clipboard.writeText(property.owner.phone);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
       } catch {
@@ -401,48 +402,56 @@ export default function PropertyDetailPage() {
                 </div>
               </div>
 
-              {/* Contact */}
+              {/* Contact — full number only ever reaches admin viewers */}
               <div className="rounded-lg bg-muted p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Contact
                   </span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-lg font-semibold tracking-widest text-foreground">
-                      {property.owner?.phoneMasked ?? "Not available"}
-                    </span>
-                  </div>
-                  {property.owner?.phoneMasked && (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={handleCopyPhone}
-                          >
-                            {copied ? (
-                              <Check className="h-4 w-4 text-blue-500" />
-                            ) : (
-                              <Copy className="h-4 w-4" />
-                            )}
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent side="left">
-                          {copied ? "Copied!" : "Copy number"}
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  )}
-                </div>
-                <p className="text-[11px] text-muted-foreground leading-relaxed">
-                  Full number &amp; direct contact unlock <br />
-                  coming in the next update.
-                </p>
+                {property.owner?.phone ? (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Phone className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-lg font-semibold tracking-widest text-foreground">
+                          {property.owner.phone}
+                        </span>
+                      </div>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={handleCopyPhone}
+                            >
+                              {copied ? (
+                                <Check className="h-4 w-4 text-blue-500" />
+                              ) : (
+                                <Copy className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="left">
+                            {copied ? "Copied!" : "Copy number"}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                      Visible to EstateDirect admins only.
+                    </p>
+                  </>
+                ) : (
+                  <p className="flex items-start gap-2 text-xs text-muted-foreground leading-relaxed">
+                    <Lock className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                    Owner contact details are shared only with EstateDirect
+                    administrators for verification. Direct contact unlock is
+                    coming in the next update.
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">

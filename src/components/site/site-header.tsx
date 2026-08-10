@@ -20,6 +20,7 @@ import {
   X,
   Building2,
   User,
+  ShieldCheck,
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router";
@@ -160,6 +161,15 @@ export function SiteHeader({ variant = "default", hidePostCta }: SiteHeaderProps
                   <Search className="mr-2 h-4 w-4" />
                   Search
                 </DropdownMenuItem>
+                {user.role === "admin" && (
+                  <DropdownMenuItem
+                    onClick={() => navigate("/admin")}
+                    className="cursor-pointer"
+                  >
+                    <ShieldCheck className="mr-2 h-4 w-4" />
+                    Admin panel
+                  </DropdownMenuItem>
+                )}
                 {user.role !== "owner" && (
                   <DropdownMenuItem
                     onClick={() => navigate("/post-property")}
