@@ -431,18 +431,24 @@ function StepLocation({
       </div>
 
       <div>
-        <Label className="text-sm font-semibold">Locality</Label>
-        <select
+        <Label className="text-sm font-semibold">Locality / Area</Label>
+        <Input
+          list="locality-suggestions"
           value={data.locality ?? ""}
           onChange={(e) => update({ locality: e.target.value || undefined })}
+          placeholder={data.city ? "Type the locality or area name" : "Select a city first"}
           disabled={!data.city}
-          className="mt-1.5 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
-        >
-          <option value="">Select locality</option>
+          className="mt-1.5"
+        />
+        <datalist id="locality-suggestions">
           {localities.map((l) => (
-            <option key={l} value={l}>{l}</option>
+            <option key={l} value={l} />
           ))}
-        </select>
+        </datalist>
+        <p className="text-xs text-muted-foreground mt-1">
+          Type any area name — common ones for {data.city ?? "your city"} are
+          suggested as you type.
+        </p>
         {errors.locality && <p className="text-xs text-destructive mt-1">{errors.locality}</p>}
       </div>
 
