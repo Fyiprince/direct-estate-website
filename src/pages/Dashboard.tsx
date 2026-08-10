@@ -87,6 +87,7 @@ export default function Dashboard() {
   const isOwner = user?.role === "owner";
   const isTenant = user?.role === "tenant";
   const isAdmin = user?.role === "admin";
+  const canList = isOwner || isAdmin; // admins may also post properties
 
   const liveListings = myListings?.filter((p) => p.status === "live") ?? [];
   const pendingListings = myListings?.filter((p) => p.status === "pending") ?? [];
@@ -154,8 +155,11 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* ── Admin moderation center ── */}
+        {isAdmin && <AdminModerationCenter />}
+
         {/* ── Owner dashboard ── */}
-        {isOwner && (
+        {canList && (
           <>
             {/* Stats cards */}
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 mb-8">
@@ -369,38 +373,34 @@ export default function Dashboard() {
           </>
         )}
 
-        {/* ── Admin / unset role fallback ── */}
-        {(isAdmin || (!isOwner && !isTenant)) && (
+        {/* ── Unset role fallback ── */}
+        {!isOwner && !isTenant && !isAdmin && (
           <div className="text-center py-12">
             <LayoutDashboard className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h2 className="text-lg font-semibold text-foreground">
-              {isAdmin ? "Admin panel" : "Welcome to EstateDirect"}
+              Welcome to EstateDirect
             </h2>
             <p className="text-sm text-muted-foreground mt-1">
-              {isAdmin
-                ? "Admin dashboard coming soon"
-                : "Set up your profile to start exploring or listing properties."}
+              Set up your profile to start exploring or listing properties.
             </p>
-            {!isAdmin && (
-              <div className="flex justify-center gap-3 mt-4">
-                <Button
-                  variant="default"
-                  className="gap-1.5"
-                  onClick={() => navigate("/search")}
-                >
-                  <Search className="h-4 w-4" />
-                  Browse properties
-                </Button>
-                <Button
-                  variant="outline"
-                  className="gap-1.5"
-                  onClick={() => navigate("/post-property")}
-                >
-                  <PlusCircle className="h-4 w-4" />
-                  Post your property
-                </Button>
-              </div>
-            )}
+            <div className="flex justify-center gap-3 mt-4">
+              <Button
+                variant="default"
+                className="gap-1.5"
+                onClick={() => navigate("/search")}
+              >
+                <Search className="h-4 w-4" />
+                Browse properties
+              </Button>
+              <Button
+                variant="outline"
+                className="gap-1.5"
+                onClick={() => navigate("/post-property")}
+              >
+                <PlusCircle className="h-4 w-4" />
+                Post your property
+              </Button>
+            </div>
           </div>
         )}
       </main>
@@ -430,6 +430,55 @@ function StatCard({
           <p className="text-lg font-bold text-foreground">{value}</p>
         </div>
       </div>
+    </Card>
+  );
+}
+
+/** Moderation snapshot + CTA for admin users landing on the dashboard. */
+function AdminModerationCenter() {
+  const stats = useQuery(api.admin.stats);
+  const navigate = useNavigate();
+
+  return (
+    <Card className="mb-8 overflow-hidden border-blue-200/60 bg-gradient-to-br from-blue-50 via-white to-blue-50">
+      <CardContent className="flex flex-col gap-5 p-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-start gap-4">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm">
+            <ShieldCheck className="h-6 w-6" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-foreground">
+              Moderation center
+            </h2>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Review every new listing before it goes live on the marketplace.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-700">
+                <Clock className="h-3 w-3" />
+                {stats?.pending ?? "—"} pending
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+                <CheckCircle className="h-3 w-3" />
+                {stats?.live ?? "—"} live
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-red-100 px-2.5 py-1 text-xs font-semibold text-red-700">
+                <Trash2 className="h-3 w-3" />
+                {stats?.rejected ?? "—"} rejected
+              </span>
+            </div>
+          </div>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <Button
+            className="gap-1.5"
+            onClick={() => navigate("/admin")}
+          >
+            <ShieldCheck className="h-4 w-4" />
+            Open approval queue
+          </Button>
+        </div>
+      </CardContent>
     </Card>
   );
 }

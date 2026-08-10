@@ -20,7 +20,10 @@ export const claimAdmin = mutation({
       throw new Error("Sign in with an email address to claim admin access");
     }
 
-    const allowlist = (process.env.ESTATEDIRECT_ADMIN_EMAIL ?? "")
+    // Allowlist comes from the ESTATEDIRECT_ADMIN_EMAIL env var (set in the
+    // Keys/API keys tab), and falls back to the project owner's admin email
+    // so admin sign-in works out of the box.
+    const allowlist = (process.env.ESTATEDIRECT_ADMIN_EMAIL ?? "metaloomart@gmail.com")
       .split(",")
       .map((e) => e.trim().toLowerCase())
       .filter(Boolean);
