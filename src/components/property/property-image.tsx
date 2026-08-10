@@ -1,4 +1,3 @@
-import { useStorageUrl } from "convex/react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState } from "react";
@@ -10,25 +9,22 @@ interface PropertyImageProps {
   priority?: boolean;
 }
 
+const CONVEX_URL = (import.meta as any).env?.VITE_CONVEX_URL ?? "";
+
 /**
  * Renders a property photo from either:
- * - A Convex storage ID (starts with no "http" prefix)
+ * - A Convex storage ID (doesn't start with "http")
  * - An external URL (e.g. Unsplash for seed data)
  *
- * Shows a skeleton while external images load / storage URLs resolve,
- * and a muted placeholder on error.
+ * Shows a skeleton while images load and a muted placeholder on error.
  */
 export function PropertyImage({ src, alt, className, priority }: PropertyImageProps) {
   const isExternal = src.startsWith("http");
-  const storageUrl = useStorageUrl(isExternal ? undefined : src);
-  const finalUrl = isExternal ? src : (storageUrl ?? null);
+  const finalUrl = isExternal
+    ? src
+    : `${CONVEX_URL}/api/storage/${src}`;
   const [loaded, setLoaded] = useState(false);
   const [errored, setErrored] = useState(false);
-
-  if (!finalUrl && !isExternal) {
-    // Still resolving the storage URL
-    return <Skeleton className={cn("bg-muted", className)} />;
-  }
 
   return (
     <div className={cn("relative overflow-hidden bg-muted", className)}>
@@ -39,7 +35,7 @@ export function PropertyImage({ src, alt, className, priority }: PropertyImagePr
         </div>
       ) : (
         <img
-          src={finalUrl!}
+          src={finalUrl}
           alt={alt}
           loading={priority ? "eager" : "lazy"}
           className={cn(

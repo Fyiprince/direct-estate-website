@@ -11,7 +11,7 @@ import { SearchFilters, type FilterValues } from "@/components/search/search-fil
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Empty } from "@/components/ui/empty";
+import { Empty, EmptyMedia, EmptyHeader, EmptyTitle, EmptyDescription, EmptyContent } from "@/components/ui/empty";
 import {
   Pagination,
   PaginationContent,
