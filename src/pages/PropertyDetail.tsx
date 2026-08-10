@@ -8,6 +8,7 @@ import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
 import { PropertyImage } from "@/components/property/property-image";
 import { PropertyCard, PropertyCardSkeleton } from "@/components/property/property-card";
+import { MapView } from "@/components/property/map-view";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -337,11 +338,18 @@ export default function PropertyDetailPage() {
             <div>
               <h2 className="text-lg font-semibold text-foreground mb-2">Location</h2>
               <p className="text-sm text-muted-foreground">{property.address}</p>
-              {(property.latitude && property.longitude) ? (
+              {property.latitude != null && property.longitude != null ? (
+                <MapView
+                  latitude={property.latitude}
+                  longitude={property.longitude}
+                  label={`${property.locality}, ${property.city}`}
+                  className="mt-3"
+                />
+              ) : (
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Map view coming soon
+                  No map pin set for this property
                 </p>
-              ) : null}
+              )}
             </div>
           </div>
 

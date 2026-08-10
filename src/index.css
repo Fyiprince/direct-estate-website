@@ -125,3 +125,19 @@
     cursor: pointer;
   }
 }
+
+/* Leaflet maps must stay below the sticky header (z-50) */
+.leaflet-container {
+  z-index: 0;
+  font: inherit;
+}
+.leaflet-pane {
+  z-index: 1;
+}
+.leaflet-top,
+.leaflet-bottom {
+  z-index: 2;
+}
+.leaflet-control-attribution {
+  font-size: 9px;
+}

@@ -1,6 +1,7 @@
 import '@vly-ai/integrations';
 import { Toaster } from "@/components/ui/sonner";
 import { RequireAuth } from "@/components/RequireAuth";
+import { RequireAdmin } from "@/components/RequireAdmin";
 import { VlyToolbar } from "../vly-toolbar-readonly.tsx";
 import { ConvexAuthProvider } from "@convex-dev/auth/react";
 import { ConvexReactClient } from "convex/react";
@@ -16,6 +17,7 @@ const Dashboard = lazy(() => import("./pages/Dashboard.tsx"));
 const SearchPage = lazy(() => import("./pages/Search.tsx"));
 const PropertyDetail = lazy(() => import("./pages/PropertyDetail.tsx"));
 const PostProperty = lazy(() => import("./pages/PostProperty.tsx"));
+const Admin = lazy(() => import("./pages/Admin.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 
 // Simple loading fallback for route transitions
@@ -143,6 +145,14 @@ createRoot(document.getElementById("root")!).render(
                   <RequireAuth>
                     <PostProperty />
                   </RequireAuth>
+                }
+              />
+              <Route
+                path="/admin"
+                element={
+                  <RequireAdmin>
+                    <Admin />
+                  </RequireAdmin>
                 }
               />
               <Route path="*" element={<NotFound />} />

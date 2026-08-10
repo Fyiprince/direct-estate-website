@@ -116,12 +116,26 @@ export const search = query({
   },
 });
 
-/** Single live listing with owner summary. */
+/**
+ * Single listing with owner summary.
+ * Live listings are public. Pending/rejected listings are visible only to
+ * the admin and to the owner who posted them.
+ */
 export const get = query({
   args: { id: v.id("properties") },
   handler: async (ctx, { id }) => {
     const property = await ctx.db.get(id);
-    if (!property || property.status !== "live") return null;
+    if (!property) return null;
+
+    if (property.status !== "live") {
+      const userId = await getAuthUserId(ctx);
+      if (userId === null) return null;
+      const me = await ctx.db.get(userId);
+      const isAdmin = me?.role === ROLES.ADMIN;
+      const isOwner = property.ownerId === userId;
+      if (!isAdmin && !isOwner) return null;
+    }
+
     const owner = await ownerSummaryOf(ctx, property.ownerId);
     return { ...property, owner } as PropertyWithOwner;
   },
@@ -277,7 +291,7 @@ function buildPropertyInsert(
     negotiable: data.negotiable,
     amenities: data.amenities,
     photos: data.photos,
-    status: "live", // v1 auto-approves; admin moderation ships in a later phase
+    status: "pending", // every listing awaits admin approval before going live
     isVerified: me?.isVerified ?? false,
     isFeatured: false,
     viewCount: 0,

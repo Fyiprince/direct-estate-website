@@ -3,6 +3,39 @@ import { v } from "convex/values";
 import { mutation } from "./_generated/server";
 import { ROLES, roleValidator } from "./schema";
 
+/**
+ * Promote the signed-in user to ADMIN if their email is in the
+ * ESTATEDIRECT_ADMIN_EMAIL allowlist (comma-separated).
+ * Admins are never self-assigned without the env gate.
+ */
+export const claimAdmin = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) throw new Error("Sign in required");
+
+    const me = await ctx.db.get(userId);
+    const email = me?.email?.trim().toLowerCase();
+    if (!email) {
+      throw new Error("Sign in with an email address to claim admin access");
+    }
+
+    const allowlist = (process.env.ESTATEDIRECT_ADMIN_EMAIL ?? "")
+      .split(",")
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean);
+
+    if (!allowlist.includes(email)) {
+      throw new Error(
+        "This email is not in the admin allowlist (ESTATEDIRECT_ADMIN_EMAIL).",
+      );
+    }
+
+    await ctx.db.patch(userId, { role: ROLES.ADMIN });
+    return { role: ROLES.ADMIN };
+  },
+});
+
 /** Set the account role during onboarding (picked once, can be upgraded later). */
 export const setRole = mutation({
   args: { role: roleValidator },

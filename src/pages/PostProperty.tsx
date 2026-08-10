@@ -16,6 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
+import { LocationPicker } from "@/components/property/location-picker";
 import { cn } from "@/lib/utils";
 import {
   CITIES,
@@ -51,6 +52,8 @@ type WizardData = {
   city?: string;
   locality?: string;
   address?: string;
+  latitude?: number;
+  longitude?: number;
   title?: string;
   description?: string;
   bhk?: number;
@@ -153,6 +156,9 @@ export default function PostProperty() {
       if (!data.city) e.city = "Select a city";
       if (!data.locality) e.locality = "Enter locality";
       if (!data.address) e.address = "Enter address";
+      if (data.latitude == null || data.longitude == null) {
+        e.location = "Drop a pin on the map (or type coordinates)";
+      }
     }
     if (step === 2) {
       if (!data.title || data.title.length < 6) e.title = "Min 6 characters for title";
@@ -200,9 +206,9 @@ export default function PostProperty() {
         return;
       }
 
-      const id = await createProperty({ input: parsed.data });
-      toast.success("Property listed successfully!");
-      navigate(`/property/${id}`);
+      await createProperty({ input: parsed.data });
+      toast.success("Listing submitted for admin approval");
+      navigate("/dashboard");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to create listing");
     } finally {
@@ -223,9 +229,10 @@ export default function PostProperty() {
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-foreground">Post your property</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            List directly to thousands of renters — zero brokerage, always.
-          </p>
+        <p className="text-sm text-muted-foreground mt-1">
+          List directly to thousands of renters — every listing is reviewed by an
+          admin before it goes live.
+        </p>
         </div>
 
         {/* Step indicator */}
@@ -449,6 +456,26 @@ function StepLocation({
           rows={2}
         />
         {errors.address && <p className="text-xs text-destructive mt-1">{errors.address}</p>}
+      </div>
+
+      <Separator />
+
+      <div>
+        <Label className="text-sm font-semibold">Pin the exact location</Label>
+        <p className="text-xs text-muted-foreground mt-1 mb-3">
+          Click the map to drop a pin, drag it to fine-tune, or type the
+          coordinates manually. Renters use this to judge the neighbourhood.
+        </p>
+        <LocationPicker
+          city={data.city}
+          value={{ latitude: data.latitude, longitude: data.longitude }}
+          onChange={(loc) =>
+            update({ latitude: loc.latitude, longitude: loc.longitude })
+          }
+        />
+        {errors.location && (
+          <p className="text-xs text-destructive mt-2">{errors.location}</p>
+        )}
       </div>
     </div>
   );
@@ -813,6 +840,11 @@ function StepReview({
           {data.locality}, {data.city}
         </p>
         <p className="text-xs text-muted-foreground">{data.address}</p>
+        {data.latitude != null && data.longitude != null && (
+          <p className="text-xs text-primary mt-1">
+            📍 {data.latitude.toFixed(4)}, {data.longitude.toFixed(4)}
+          </p>
+        )}
       </div>
 
       <Separator />
@@ -872,6 +904,15 @@ function StepReview({
           <button onClick={() => openStep(4)} className="text-xs text-primary hover:underline">Edit</button>
         </div>
         <p className="text-xs text-muted-foreground mt-1">{data.photos.length} photo(s) uploaded</p>
+      </div>
+
+      <Separator />
+
+      {/* Approval note */}
+      <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800">
+        <strong>Note:</strong> this listing will be submitted as "Pending review".
+        An admin must approve it before it appears in public search results.
+        You'll be able to track its status from your dashboard.
       </div>
     </div>
   );
