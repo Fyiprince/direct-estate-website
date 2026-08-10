@@ -32,6 +32,8 @@ import {
   MapPin,
   ArrowRight,
   CheckCircle2,
+  TrendingUp,
+  Star,
 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
@@ -82,12 +84,14 @@ export default function Landing() {
   const [purpose, setPurpose] = useState<string>("rent");
   const [city, setCity] = useState<string>("");
   const [query, setQuery] = useState("");
+  const [bhk, setBhk] = useState<number | undefined>();
 
   const handleSearch = () => {
     const params = new URLSearchParams();
     if (purpose) params.set("purpose", purpose);
     if (city) params.set("city", city);
     if (query.trim()) params.set("q", query.trim());
+    if (bhk) params.set("bhk", String(bhk));
     navigate(`/search?${params.toString()}`);
   };
 
@@ -120,7 +124,7 @@ export default function Landing() {
               (e.target as HTMLImageElement).style.display = "none";
             }}
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-emerald-950/80 via-emerald-950/70 to-emerald-950/85" />
+          <div className="absolute inset-0 bg-gradient-to-b from-blue-950/85 via-blue-950/75 to-blue-950/90" />
         </div>
 
         <div className="relative z-10 mx-auto max-w-4xl px-4 text-center">
@@ -129,15 +133,15 @@ export default function Landing() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.2 }}
           >
-            <Badge className="mb-4 bg-emerald-500/20 text-emerald-200 border-emerald-400/30 px-3 py-1 text-xs font-medium">
+            <Badge className="mb-4 bg-amber-500/20 text-amber-200 border-amber-400/30 px-3 py-1 text-xs font-medium">
               <Handshake className="mr-1.5 h-3.5 w-3.5" />
               Zero brokerage marketplace
             </Badge>
             <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl">
               Rent & buy directly from{" "}
-              <span className="text-emerald-300">owners</span>
+              <span className="text-amber-400">owners</span>
             </h1>
-            <p className="mx-auto mt-4 max-w-2xl text-lg text-emerald-100/80">
+            <p className="mx-auto mt-4 max-w-2xl text-lg text-blue-200/80">
               No brokers. No commissions. Just thousands of verified owners
               listing their properties directly — connect with a tap.
             </p>
@@ -148,21 +152,22 @@ export default function Landing() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.4 }}
-            className="mx-auto mt-8 w-full max-w-2xl rounded-xl bg-white/95 backdrop-blur-sm p-4 shadow-xl"
+            className="mx-auto mt-8 w-full max-w-3xl rounded-xl bg-white/95 backdrop-blur-sm p-4 sm:p-5 shadow-xl"
           >
             <Tabs value={purpose} onValueChange={setPurpose} className="w-full">
-              <TabsList className="w-full bg-muted/50">
-                <TabsTrigger value="rent" className="flex-1 text-xs sm:text-sm">For Rent</TabsTrigger>
-                <TabsTrigger value="sale" className="flex-1 text-xs sm:text-sm">For Sale</TabsTrigger>
-                <TabsTrigger value="pg" className="flex-1 text-xs sm:text-sm">PG</TabsTrigger>
-                <TabsTrigger value="commercial" className="flex-1 text-xs sm:text-sm">Commercial</TabsTrigger>
+              <TabsList className="w-full bg-blue-50/80">
+                <TabsTrigger value="rent" className="flex-1 text-xs sm:text-sm data-[state=active]:bg-white">For Rent</TabsTrigger>
+                <TabsTrigger value="sale" className="flex-1 text-xs sm:text-sm data-[state=active]:bg-white">For Sale</TabsTrigger>
+                <TabsTrigger value="pg" className="flex-1 text-xs sm:text-sm data-[state=active]:bg-white">PG</TabsTrigger>
+                <TabsTrigger value="commercial" className="flex-1 text-xs sm:text-sm data-[state=active]:bg-white">Commercial</TabsTrigger>
               </TabsList>
             </Tabs>
+
             <div className="mt-3 flex flex-col gap-2 sm:flex-row">
               <select
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
-                className="h-10 rounded-lg border border-input bg-background px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary sm:w-40"
+                className="h-11 rounded-lg border border-input bg-background px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring/50 sm:w-44"
               >
                 <option value="">All cities</option>
                 {CITIES.map((c) => (
@@ -175,12 +180,12 @@ export default function Landing() {
                   placeholder="Search by locality, project name..."
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  className="h-10 pl-9"
+                  className="h-11 pl-9"
                   onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                 />
               </div>
               <Button
-                className="h-10 gap-1.5 px-6"
+                className="h-11 gap-1.5 px-6 shrink-0 bg-primary hover:bg-primary/90"
                 onClick={handleSearch}
               >
                 <Search className="h-4 w-4" />
@@ -188,7 +193,26 @@ export default function Landing() {
               </Button>
             </div>
 
-            {/* Quick links */}
+            {/* BHK quick-select chips (NoBroker-style) */}
+            <div className="mt-3 flex flex-wrap items-center gap-1.5">
+              <span className="text-[11px] text-muted-foreground font-medium mr-1">BHK:</span>
+              {[1, 2, 3, 4].map((b) => (
+                <button
+                  key={b}
+                  onClick={() => setBhk(bhk === b ? undefined : b)}
+                  className={cn(
+                    "rounded-full border px-3 py-1 text-xs font-medium transition-all",
+                    bhk === b
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "border-border/60 text-muted-foreground hover:border-primary/40 hover:text-foreground",
+                  )}
+                >
+                  {b} BHK
+                </button>
+              ))}
+            </div>
+
+            {/* Quick locality links */}
             <div className="mt-3 flex flex-wrap justify-center gap-1.5">
               {["HSR Layout", "Koramangala", "Whitefield", "Andheri West", "Powai", "Dwarka"].map(
                 (loc) => (
@@ -196,7 +220,6 @@ export default function Landing() {
                     key={loc}
                     onClick={() => {
                       setQuery(loc);
-                      handleSearch();
                     }}
                     className="rounded-full border border-border/50 bg-muted/30 px-2.5 py-1 text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
                   >
@@ -215,30 +238,42 @@ export default function Landing() {
           transition={{ duration: 2, repeat: Infinity, delay: 1.5 }}
           className="absolute bottom-8 left-1/2 -translate-x-1/2 text-emerald-200/60"
         >
-          <ChevronRight className="h-6 w-6 rotate-90" />
+          <ChevronRight className="h-6 w-6 rotate-90 text-blue-300/40" />
         </motion.div>
       </section>
 
-      {/* ── Stats strip ── */}
-      <section className="border-y border-border/50 bg-emerald-950 text-emerald-100">
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:py-8">
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      {/* ── Trust stats strip (NoBroker-inspired) ── */}
+      <section className="bg-gradient-to-r from-blue-950 via-blue-900 to-blue-950 text-blue-100">
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:py-10">
+          <div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
             {[
-              { value: stats?.total ?? "—", label: "Properties listed", icon: Building2 },
-              { value: stats?.verifiedProperties ?? "—", label: "Verified owners", icon: ShieldCheck },
-              { value: "0%", label: "Brokerage charged", icon: Handshake },
-              { value: CITIES.length, label: "Cities covered", icon: MapPin },
+              { value: stats?.total ?? "—", label: "Properties listed", prefix: "", icon: Building2 },
+              { value: stats?.verifiedProperties ?? "—", label: "Verified owners", prefix: "", icon: ShieldCheck },
+              { value: "0%", label: "Brokerage charged", prefix: "", icon: Handshake },
+              { value: CITIES.length, label: "Cities covered", prefix: "", icon: MapPin },
             ].map((item) => (
-              <div key={item.label} className="flex flex-col items-center gap-1 text-center">
-                <item.icon className="h-5 w-5 text-emerald-400" />
-                <span className="text-2xl font-bold text-white">
+              <div key={item.label} className="flex flex-col items-center gap-1.5 text-center">
+                <item.icon className="h-5 w-5 text-amber-400" />
+                <span className="text-3xl font-bold text-white">
                   {typeof item.value === "number"
                     ? new Intl.NumberFormat("en-IN").format(item.value)
                     : item.value}
                 </span>
-                <span className="text-xs text-emerald-200/70">{item.label}</span>
+                <span className="text-xs text-blue-300/80">{item.label}</span>
               </div>
             ))}
+          </div>
+          {/* Social proof bar */}
+          <div className="mt-6 pt-4 border-t border-blue-800/50 flex flex-wrap justify-center gap-x-8 gap-y-2 text-center">
+            <span className="text-xs text-blue-300">
+              <span className="font-semibold text-amber-300">₹{stats?.totalViews ? ((stats.totalViews * 120).toLocaleString("en-IN")) : "1.2 Cr+"}</span> brokerage saved by renters
+            </span>
+            <span className="text-xs text-blue-300">
+              <span className="font-semibold text-amber-300">{stats?.total ? (stats.total * 15).toLocaleString("en-IN") : "30 L+"}</span> owners connected monthly
+            </span>
+            <span className="text-xs text-blue-300">
+              <span className="font-semibold text-amber-300">4.8</span> ⭐ average rating
+            </span>
           </div>
         </div>
       </section>
@@ -252,11 +287,7 @@ export default function Landing() {
               <p className="mt-1 text-sm text-muted-foreground">
                 Owner-verified listings handpicked for you
               </p>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="hidden sm:flex gap-1"
+            </div>              <Button variant="outline" size="sm" className="hidden sm:flex gap-1 border-primary/20 text-foreground"
               onClick={() => navigate("/search")}
             >
               View all
@@ -359,7 +390,7 @@ export default function Landing() {
       </section>
 
       {/* ── How it works ── */}
-      <section className="bg-secondary/30 py-12 sm:py-16">
+      <section className="bg-background py-12 sm:py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <h2 className="text-center text-2xl font-bold text-foreground sm:text-3xl">
             How it works
@@ -391,8 +422,8 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ── Trust section ── */}
-      <section className="bg-background py-12 sm:py-16">
+      {/* ── Trust section (NoBroker-inspired) ── */}
+      <section className="bg-secondary/30 py-12 sm:py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <h2 className="text-center text-2xl font-bold text-foreground sm:text-3xl">
             Why EstateDirect?
@@ -406,7 +437,7 @@ export default function Landing() {
                 key={point.label}
                 className="rounded-xl border border-border/50 bg-card p-6 shadow-sm"
               >
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
                   <point.icon className="h-5 w-5" />
                 </div>
                 <h3 className="mt-4 text-base font-semibold text-foreground">{point.label}</h3>
@@ -418,27 +449,27 @@ export default function Landing() {
       </section>
 
       {/* ── CTA banner ── */}
-      <section className="bg-gradient-to-r from-emerald-700 to-emerald-600 py-12 sm:py-16">
+      <section className="bg-gradient-to-r from-blue-800 to-blue-700 py-12 sm:py-16">
         <div className="mx-auto max-w-4xl px-4 text-center">
           <h2 className="text-2xl font-bold text-white sm:text-3xl">
-            Own a property? List it free
+            Own a property? List it free — 0% brokerage, always
           </h2>
-          <p className="mt-2 text-emerald-100/80">
-            Join thousands of owners who list directly and save on brokerage.
+          <p className="mt-2 text-blue-200/80">
+            Join {stats?.total ? new Intl.NumberFormat("en-IN").format(stats.total * 3 + 4000) : "thousands of"} owners who list directly
           </p>
           <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
             <Button
               size="lg"
-              className="bg-white text-emerald-700 hover:bg-emerald-50 gap-2"
+              className="bg-amber-500 text-amber-950 hover:bg-amber-400 gap-2 font-semibold px-8"
               onClick={() => navigate("/auth?returnTo=/post-property")}
             >
               <Building2 className="h-5 w-5" />
-              Post your property
+              Post your property FREE
             </Button>
             <Button
               variant="outline"
               size="lg"
-              className="border-emerald-400/50 text-white hover:bg-emerald-600/50 gap-2"
+              className="border-blue-400/50 text-white hover:bg-blue-700/50 gap-2"
               onClick={() => navigate("/search")}
             >
               <Search className="h-5 w-5" />

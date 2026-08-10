@@ -126,9 +126,9 @@ export function PropertyCard({ property, className, priority, showOwner }: Prope
         <div className="absolute left-2 top-2 flex flex-col gap-1">
           <Badge
             className={cn(
-              "text-[10px] font-semibold uppercase tracking-wide",
+              "text-[10px] font-semibold uppercase tracking-wide px-2",
               isRent
-                ? "bg-emerald-600 text-white hover:bg-emerald-600"
+                ? "bg-blue-600 text-white hover:bg-blue-600"
                 : "bg-amber-500 text-white hover:bg-amber-500",
             )}
           >
@@ -140,9 +140,14 @@ export function PropertyCard({ property, className, priority, showOwner }: Prope
               Featured
             </Badge>
           )}
+          {property.availableFrom == null && (
+            <Badge variant="secondary" className="bg-white/90 text-foreground text-[10px] border-0">
+              Ready to move
+            </Badge>
+          )}
         </div>
         {property.isVerified && (
-          <div className="absolute right-2 top-2 rounded-full bg-white/90 p-1 text-emerald-600 shadow-sm">
+          <div className="absolute right-2 top-2 rounded-full bg-white/90 p-1 text-blue-600 shadow-sm">
             <ShieldCheck className="h-3.5 w-3.5" />
           </div>
         )}
@@ -157,7 +162,21 @@ export function PropertyCard({ property, className, priority, showOwner }: Prope
             <span className="text-xs text-muted-foreground">/mo</span>
           )}
           {property.negotiable && (
-            <span className="text-[10px] text-muted-foreground ml-auto italic">Negotiable</span>
+            <span className="text-[10px] italic text-muted-foreground ml-auto">Negotiable</span>
+          )}
+        </div>
+
+        {/* Extra costs (NoBroker-style breakdown) */}
+        <div className="flex flex-wrap gap-x-2 gap-y-0.5 text-[10px] text-muted-foreground">
+          {property.deposit != null && (
+            <span className="inline-flex items-center gap-0.5">
+              <span className="font-medium">{formatPriceCompact(property.deposit)}</span> deposit
+            </span>
+          )}
+          {property.maintenance != null && property.maintenance > 0 && (
+            <span className="inline-flex items-center gap-0.5">
+              <span className="font-medium">{formatPriceCompact(property.maintenance)}</span>/mo maintenance
+            </span>
           )}
         </div>
 

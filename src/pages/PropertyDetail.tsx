@@ -225,12 +225,11 @@ export default function PropertyDetailPage() {
 
             {/* Title & badges */}
             <div>
-              <div className="flex flex-wrap items-center gap-2 mb-2">
-                <Badge
+              <div className="flex flex-wrap items-center gap-2 mb-2">                  <Badge
                   className={cn(
                     "text-xs font-semibold",
                     property.listingFor === "rent"
-                      ? "bg-emerald-600 text-white"
+                      ? "bg-blue-600 text-white"
                       : "bg-amber-500 text-white",
                   )}
                 >
@@ -240,7 +239,7 @@ export default function PropertyDetailPage() {
                   {PROPERTY_TYPE_LABELS[property.type]}
                 </Badge>
                 {property.isVerified && (
-                  <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-emerald-200 gap-1 text-xs">
+                  <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200 gap-1 text-xs">
                     <ShieldCheck className="h-3 w-3" />
                     Verified Owner
                   </Badge>
@@ -324,7 +323,7 @@ export default function PropertyDetailPage() {
                       key={amenity}
                       className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-xs font-medium text-foreground"
                     >
-                      <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+                      <CheckCircle2 className="h-3 w-3 text-blue-500" />
                       {amenity}
                     </span>
                   ))
@@ -384,7 +383,7 @@ export default function PropertyDetailPage() {
                         {property.owner?.name ?? "Owner"}
                       </p>
                       {property.owner?.isVerified && (
-                        <ShieldCheck className="h-4 w-4 text-emerald-500" />
+                        <ShieldCheck className="h-4 w-4 text-blue-500" />
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground">
@@ -419,7 +418,7 @@ export default function PropertyDetailPage() {
                             onClick={handleCopyPhone}
                           >
                             {copied ? (
-                              <Check className="h-4 w-4 text-emerald-500" />
+                              <Check className="h-4 w-4 text-blue-500" />
                             ) : (
                               <Copy className="h-4 w-4" />
                             )}

@@ -122,7 +122,7 @@ export default function Dashboard() {
                   {user?.role ?? "Renter"}
                 </Badge>
                 {user?.isVerified && (
-                  <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 gap-1 text-[10px]">
+                  <Badge className="bg-blue-100 text-blue-700 border-blue-200 gap-1 text-[10px]">
                     <ShieldCheck className="h-3 w-3" />
                     Verified
                   </Badge>
@@ -343,7 +343,7 @@ export default function Dashboard() {
 
               <Card className="p-6">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
                     <Building2 className="h-5 w-5" />
                   </div>
                   <div>

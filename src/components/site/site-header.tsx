@@ -12,7 +12,6 @@ import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { initials } from "@/lib/property";
 import {
-  Home,
   Search,
   PlusCircle,
   LayoutDashboard,
@@ -20,12 +19,14 @@ import {
   Menu,
   X,
   Building2,
+  User,
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router";
 
 interface SiteHeaderProps {
   variant?: "default" | "transparent";
+  hidePostCta?: boolean;
 }
 
 const NAV_LINKS = [
@@ -35,7 +36,7 @@ const NAV_LINKS = [
   { href: "/search?purpose=rent&type=commercial", label: "Commercial" },
 ];
 
-export function SiteHeader({ variant = "default" }: SiteHeaderProps) {
+export function SiteHeader({ variant = "default", hidePostCta }: SiteHeaderProps) {
   const { isAuthenticated, isLoading, user, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -46,8 +47,6 @@ export function SiteHeader({ variant = "default" }: SiteHeaderProps) {
     navigate("/");
   };
 
-  const isActive = (href: string) => location.pathname === href || location.search === href.split("?")[1];
-
   return (
     <header
       className={cn(
@@ -57,59 +56,76 @@ export function SiteHeader({ variant = "default" }: SiteHeaderProps) {
           : "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-border/50",
       )}
     >
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
+      <div className="mx-auto flex h-14 sm:h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 shrink-0">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Building2 className="h-5 w-5" />
+          <div className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+            <Building2 className="h-4 w-4 sm:h-5 sm:w-5" />
           </div>
-          <span className="text-lg font-bold tracking-tight text-foreground hidden sm:inline">
+          <span className="text-base sm:text-lg font-bold tracking-tight text-foreground">
             EstateDirect
           </span>
         </Link>
 
         {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center gap-1">
-          {NAV_LINKS.map((link) => (
-            <Button
-              key={link.href}
-              variant="ghost"
-              size="sm"
-              className={cn(
-                "text-sm font-medium transition-colors",
-                location.search === link.href.split("?")[1]
-                  ? "text-primary bg-primary/5"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-              onClick={() => navigate(link.href)}
-            >
-              {link.label}
-            </Button>
-          ))}
+        <nav className="hidden md:flex items-center gap-0.5">
+          {NAV_LINKS.map((link) => {
+            const isActive = location.search === link.href.split("?")[1] || (
+              link.href.includes("purpose=rent") && location.search.includes("purpose=rent")
+            );
+            return (
+              <Button
+                key={link.href}
+                variant="ghost"
+                size="sm"
+                className={cn(
+                  "text-sm font-medium transition-colors px-3",
+                  isActive
+                    ? "text-primary bg-primary/5"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+                onClick={() => navigate(link.href)}
+              >
+                {link.label}
+              </Button>
+            );
+          })}
         </nav>
 
         {/* Right side */}
-        <div className="flex items-center gap-2">
-          {/* Post Property */}
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* Search (mobile) */}
           <Button
-            variant="default"
-            size="sm"
-            className="hidden sm:inline-flex gap-1.5"
-            onClick={() => {
-              if (isAuthenticated) navigate("/post-property");
-              else navigate("/auth?returnTo=/post-property");
-            }}
+            variant="ghost"
+            size="icon"
+            className="md:hidden h-8 w-8"
+            onClick={() => navigate("/search")}
           >
-            <PlusCircle className="h-4 w-4" />
-            Post Property
+            <Search className="h-4 w-4" />
           </Button>
+
+          {/* Post Property */}
+          {!hidePostCta && (
+            <Button
+              variant="default"
+              size="sm"
+              className="hidden sm:inline-flex gap-1.5 text-xs sm:text-sm font-semibold bg-primary hover:bg-primary/90"
+              onClick={() => {
+                if (isAuthenticated) navigate("/post-property");
+                else navigate("/auth?returnTo=/post-property");
+              }}
+            >
+              <PlusCircle className="h-4 w-4 shrink-0" />
+              <span>Post Property FREE</span>
+            </Button>
+          )}
 
           {isLoading ? null : isAuthenticated && user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full">
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9 rounded-full">
+                  <Avatar className="h-7 w-7 sm:h-8 sm:w-8">
+                    <AvatarFallback className="text-[10px] sm:text-xs bg-primary/10 text-primary">
                       {initials(user.name)}
                     </AvatarFallback>
                   </Avatar>
@@ -144,6 +160,15 @@ export function SiteHeader({ variant = "default" }: SiteHeaderProps) {
                   <Search className="mr-2 h-4 w-4" />
                   Search
                 </DropdownMenuItem>
+                {user.role !== "owner" && (
+                  <DropdownMenuItem
+                    onClick={() => navigate("/post-property")}
+                    className="cursor-pointer"
+                  >
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Post a property
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={handleSignOut}
@@ -158,9 +183,11 @@ export function SiteHeader({ variant = "default" }: SiteHeaderProps) {
             <Button
               variant="outline"
               size="sm"
+              className="text-xs sm:text-sm gap-1.5"
               onClick={() => navigate("/auth")}
             >
-              Sign In
+              <User className="h-4 w-4" />
+              <span className="hidden sm:inline">Sign In</span>
             </Button>
           )}
 
@@ -168,22 +195,22 @@ export function SiteHeader({ variant = "default" }: SiteHeaderProps) {
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden"
+            className="md:hidden h-8 w-8"
             onClick={() => setMobileOpen(!mobileOpen)}
           >
-            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {mobileOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
           </Button>
         </div>
       </div>
 
       {/* Mobile nav */}
       {mobileOpen && (
-        <div className="md:hidden border-t border-border/50 bg-background px-4 py-3 space-y-2">
+        <div className="md:hidden border-t border-border/50 bg-background px-4 py-3 space-y-1.5">
           {NAV_LINKS.map((link) => (
             <Button
               key={link.href}
               variant="ghost"
-              className="w-full justify-start text-sm"
+              className="w-full justify-start text-sm h-9"
               onClick={() => {
                 navigate(link.href);
                 setMobileOpen(false);
@@ -192,17 +219,19 @@ export function SiteHeader({ variant = "default" }: SiteHeaderProps) {
               {link.label}
             </Button>
           ))}
-          <Button
-            variant="default"
-            className="w-full gap-1.5"
-            onClick={() => {
-              navigate(isAuthenticated ? "/post-property" : "/auth?returnTo=/post-property");
-              setMobileOpen(false);
-            }}
-          >
-            <PlusCircle className="h-4 w-4" />
-            Post Property
-          </Button>
+          {!hidePostCta && (
+            <Button
+              variant="default"
+              className="w-full gap-1.5 mt-2"
+              onClick={() => {
+                navigate(isAuthenticated ? "/post-property" : "/auth?returnTo=/post-property");
+                setMobileOpen(false);
+              }}
+            >
+              <PlusCircle className="h-4 w-4" />
+              Post Property FREE
+            </Button>
+          )}
         </div>
       )}
     </header>
