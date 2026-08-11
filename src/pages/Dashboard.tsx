@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardAction } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   AlertDialog,
@@ -25,7 +24,8 @@ import {
 import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
 import { cn } from "@/lib/utils";
-import { formatINR, formatPriceCompact, relativeTime, initials, STATUS_LABELS } from "@/lib/property";
+import { formatPriceCompact, initials, STATUS_LABELS } from "@/lib/property";
+import type { Id } from "@/convex/_generated/dataModel";
 import {
   Building2,
   Eye,
@@ -34,7 +34,6 @@ import {
   Trash2,
   LayoutDashboard,
   ChevronRight,
-  Home,
   TrendingUp,
   CheckCircle,
   Clock,
@@ -75,7 +74,7 @@ export default function Dashboard() {
   const handleDelete = async (id: string) => {
     setDeleting(id);
     try {
-      await deleteProperty({ id: id as any });
+      await deleteProperty({ id: id as Id<"properties"> });
       toast.success("Listing deleted");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to delete");
