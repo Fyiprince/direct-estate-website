@@ -37,7 +37,10 @@ export const phoneOtp = Phone({
   async sendVerificationRequest({ identifier, token }) {
     const accountSid = process.env.TWILIO_ACCOUNT_SID;
     const authToken = process.env.TWILIO_AUTH_TOKEN;
-    const fromNumber = process.env.TWILIO_FROM_NUMBER;
+    // Accept both the conventional Twilio name and the legacy name so the
+    // key works whichever label the user pastes into the Keys tab.
+    const fromNumber =
+      process.env.TWILIO_PHONE_NUMBER ?? process.env.TWILIO_FROM_NUMBER;
 
     const message =
       `EstateDirect: your verification code is ${token}. ` +
