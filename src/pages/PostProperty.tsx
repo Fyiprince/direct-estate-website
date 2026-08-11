@@ -1,7 +1,7 @@
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { useNavigate } from "react-router";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -570,7 +570,13 @@ function StepDetails({
           <Label className="text-sm font-semibold">Furnishing</Label>
           <select
             value={data.furnishing ?? ""}
-            onChange={(e) => update({ furnishing: (e.target.value || undefined) as any })}
+            onChange={(e) =>
+              update({
+                furnishing: (e.target.value || undefined) as
+                  | (typeof FURNISHING)[number]
+                  | undefined,
+              })
+            }
             className="mt-1.5 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
           >
             <option value="">Select</option>

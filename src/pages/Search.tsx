@@ -1,7 +1,7 @@
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useSearchParams } from "react-router";
 
 import { SiteHeader } from "@/components/site/site-header";
@@ -10,7 +10,7 @@ import { PropertyCard, PropertyCardSkeleton } from "@/components/property/proper
 import { SearchFilters, type FilterValues } from "@/components/search/search-filters";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { Empty, EmptyMedia, EmptyHeader, EmptyTitle, EmptyDescription, EmptyContent } from "@/components/ui/empty";
 import {
   Pagination,
@@ -23,7 +23,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { SORT_OPTIONS, SORT_LABELS } from "@/lib/property";
-import { Search, SlidersHorizontal, MapPin, ListEnd, ArrowUpDown } from "lucide-react";
+import { Search, ArrowUpDown } from "lucide-react";
 
 const ITEMS_PER_PAGE = 12;
 

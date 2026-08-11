@@ -12,11 +12,10 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { Skeleton } from "@/components/ui/skeleton";
 import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
 import { PropertyCard, PropertyCardSkeleton } from "@/components/property/property-card";
-import { CITIES, PROPERTY_TYPE_LABELS, formatPriceCompact } from "@/lib/property";
+import { CITIES, PROPERTY_TYPE_LABELS } from "@/lib/property";
 import { cn } from "@/lib/utils";
 import {
   Building2,
@@ -32,8 +31,6 @@ import {
   MapPin,
   ArrowRight,
   CheckCircle2,
-  TrendingUp,
-  Star,
 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router";

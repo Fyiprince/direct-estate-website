@@ -53,7 +53,6 @@ export function MapView({ latitude, longitude, label, className }: MapViewProps)
       map.remove();
       mapRef.current = null;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [latitude, longitude, label]);
 
   return (

@@ -2,15 +2,12 @@ import { PropertyImage } from "./property-image";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import {
   formatPriceCompact,
   formatArea,
-  formatDate,
   relativeTime,
-  initials,
-  PROPERTY_TYPE_LABELS,
   PURPOSE_LABELS,
 } from "@/lib/property";
 import {

@@ -7,7 +7,7 @@ import { useParams, useNavigate } from "react-router";
 import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
 import { PropertyImage } from "@/components/property/property-image";
-import { PropertyCard, PropertyCardSkeleton } from "@/components/property/property-card";
+import { PropertyCard } from "@/components/property/property-card";
 import { MapView } from "@/components/property/map-view";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import type { Id } from "@/convex/_generated/dataModel";
 import {
   formatINR,
   formatPriceCompact,
@@ -26,27 +27,19 @@ import {
   PROPERTY_TYPE_LABELS,
   PURPOSE_LABELS,
   FURNISHING_LABELS,
-  AMENITIES,
 } from "@/lib/property";
 import {
-  Bed,
-  Bath,
-  Maximize2,
   MapPin,
-  Share2,
   ChevronLeft,
   ChevronRight,
   ShieldCheck,
   Phone,
   Lock,
   MessageCircle,
-  Calendar,
-  Building2,
   Clock,
   Eye,
   ArrowLeft,
   CheckCircle2,
-  XCircle,
   Copy,
   Check,
 } from "lucide-react";
@@ -54,11 +47,19 @@ import {
 export default function PropertyDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const property = useQuery(api.properties.get, id ? { id: id as any } : "skip");
+  const property = useQuery(
+    api.properties.get,
+    id ? { id: id as Id<"properties"> } : "skip",
+  );
   const similar = useQuery(
     api.properties.similar,
     id && property
-      ? { id: id as any, city: property.city, type: property.type, limit: 4 }
+      ? {
+          id: id as Id<"properties">,
+          city: property.city,
+          type: property.type,
+          limit: 4,
+        }
       : "skip",
   );
   const incrementView = useMutation(api.properties.incrementView);
@@ -71,7 +72,7 @@ export default function PropertyDetailPage() {
   useEffect(() => {
     if (id && !viewIncremented.current) {
       viewIncremented.current = true;
-      incrementView({ id: id as any });
+      incrementView({ id: id as Id<"properties"> });
     }
   }, [id, incrementView]);
 

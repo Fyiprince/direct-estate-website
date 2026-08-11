@@ -1,10 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 import {
   CITIES,
@@ -13,7 +11,6 @@ import {
   FURNISHING,
   FURNISHING_LABELS,
   BHK_OPTIONS,
-  AMENITIES,
 } from "@/lib/property";
 import { SlidersHorizontal, RotateCcw, ChevronDown } from "lucide-react";
 import {
@@ -22,7 +19,6 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
 
 export type FilterValues = {
   purpose?: "rent" | "sale";

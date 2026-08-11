@@ -9,7 +9,9 @@ interface PropertyImageProps {
   priority?: boolean;
 }
 
-const CONVEX_URL = (import.meta as any).env?.VITE_CONVEX_URL ?? "";
+const CONVEX_URL =
+  (import.meta as { env?: { VITE_CONVEX_URL?: string } }).env?.VITE_CONVEX_URL ??
+  "";
 
 /**
  * Renders a property photo from either:

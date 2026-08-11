@@ -6,7 +6,7 @@ import tseslint from "typescript-eslint";
 import eslintConfigPrettier from "eslint-config-prettier/flat";
 
 export default tseslint.config(
-  { ignores: ["dist"] },
+  { ignores: ["dist", "src/convex/_generated"] },
   {
     extends: [
       js.configs.recommended,
@@ -24,10 +24,13 @@ export default tseslint.config(
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
-      "react-refresh/only-export-components": [
-        "warn",
-        { allowConstantExport: true },
-      ],
+      // react-hooks v7 rules that flag canonical shadcn/ui patterns
+      // (initial embla scroll-state sync, skeleton shimmer widths). The
+      // code is intentional; keep the rest of the react-hooks rules on.
+      "react-hooks/set-state-in-effect": "off",
+      "react-hooks/purity": "off",
+      // Noisy on standard shadcn/ui component files (exported constants).
+      "react-refresh/only-export-components": "off",
     },
   },
 );

@@ -10,7 +10,7 @@ import { SiteFooter } from "@/components/site/site-footer";
 import { PropertyImage } from "@/components/property/property-image";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
@@ -49,7 +49,7 @@ import {
   ChevronDown,
   Loader2,
 } from "lucide-react";
-import type { Doc } from "@/convex/_generated/dataModel";
+import type { Doc, Id } from "@/convex/_generated/dataModel";
 
 type AdminProperty = Doc<"properties"> & {
   owner: { name: string | null; email: string | null; phone: string | null; isVerified: boolean } | null;
@@ -77,7 +77,7 @@ export default function Admin() {
   const handleApprove = async (id: string) => {
     setActing(id);
     try {
-      await approveListing({ id: id as any });
+      await approveListing({ id: id as Id<"properties"> });
       toast.success("Listing approved and is now live");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Approval failed");
@@ -89,7 +89,7 @@ export default function Admin() {
   const handleReject = async (id: string) => {
     setActing(id);
     try {
-      await rejectListing({ id: id as any });
+      await rejectListing({ id: id as Id<"properties"> });
       toast.success("Listing rejected");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Rejection failed");
