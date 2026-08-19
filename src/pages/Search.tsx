@@ -32,8 +32,10 @@ export default function SearchPage() {
   const [queryInput, setQueryInput] = useState(searchParams.get("q") ?? "");
 
   // Build filter values from URL
+  // Sanitize purpose — only "rent" or "sale" are valid; ignore invalid values like "pg" or "commercial"
+  const rawPurpose = searchParams.get("purpose");
   const filters: FilterValues = {
-    purpose: (searchParams.get("purpose") as FilterValues["purpose"]) ?? undefined,
+    purpose: rawPurpose === "rent" || rawPurpose === "sale" ? rawPurpose : undefined,
     type: searchParams.get("type") ?? undefined,
     city: searchParams.get("city") ?? undefined,
     q: searchParams.get("q") ?? undefined,
