@@ -48,12 +48,7 @@ export const setRole = mutation({
 
     if (role === ROLES.ADMIN) throw new Error("Admins are provisioned by EstateDirect");
 
-    const me = await ctx.db.get(userId);
-    // Downgrades are not allowed — a renter-turned-owner stays an owner.
-    if (me?.role === ROLES.OWNER && role === ROLES.TENANT) {
-      throw new Error("Owner accounts can't be downgraded to renter");
-    }
-
+    // Allow switching between owner and tenant — owners also browse/search.
     await ctx.db.patch(userId, { role });
     return { role };
   },
