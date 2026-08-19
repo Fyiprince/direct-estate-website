@@ -85,7 +85,13 @@ export default function Landing() {
 
   const handleSearch = () => {
     const params = new URLSearchParams();
-    if (purpose) params.set("purpose", purpose);
+    // "pg" and "commercial" are property types, not listing purposes.
+    // Map them to the type filter instead of purpose.
+    if (purpose === "pg" || purpose === "commercial") {
+      params.set("type", purpose);
+    } else if (purpose) {
+      params.set("purpose", purpose);
+    }
     if (city) params.set("city", city);
     if (query.trim()) params.set("q", query.trim());
     if (bhk) params.set("bhk", String(bhk));
