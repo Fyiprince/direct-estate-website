@@ -123,6 +123,12 @@ const sanitize = (value: string) =>
   value.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
 
 export const propertyInputSchema = z.object({
+  phoneNumber: z
+  .string()
+  .trim()
+  .min(10, "Phone number must be at least 10 digits")
+  .max(15, "Phone number is too long")
+  .regex(/^[0-9+\-\s()]+$/, "Enter a valid phone number"),
   title: z
     .string()
     .min(6, "Give your listing a clear title (min 6 characters)")

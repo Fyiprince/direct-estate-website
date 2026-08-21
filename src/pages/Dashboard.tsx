@@ -1,6 +1,7 @@
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { motion } from "framer-motion";
+
 import { useAuth } from "@/hooks/use-auth";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
@@ -89,6 +90,7 @@ export default function Dashboard() {
   const canList = isOwner || isAdmin; // admins may also post properties
 
   const liveListings = myListings?.filter((p) => p.status === "live") ?? [];
+  const rejectedListings = myListings?.filter((p) => p.status === "rejected") ?? [];
   const pendingListings = myListings?.filter((p) => p.status === "pending") ?? [];
   const totalViews = myListings?.reduce((s, p) => s + p.viewCount, 0) ?? 0;
 
@@ -162,15 +164,30 @@ export default function Dashboard() {
           <>
             {/* Stats cards */}
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 mb-8">
-              <StatCard icon={Building2} label="Live listings" value={liveListings.length} />
-              <StatCard icon={Clock} label="Pending review" value={pendingListings.length} />
-              <StatCard icon={Eye} label="Total views" value={totalViews} />
-              <StatCard
-                icon={TrendingUp}
-                label="Total listings"
-                value={myListings?.length ?? 0}
-              />
-            </div>
+  <StatCard
+    icon={Building2}
+    label="Live listings"
+    value={liveListings.length}
+  />
+
+  <StatCard
+    icon={Clock}
+    label="Pending review"
+    value={pendingListings.length}
+  />
+
+  <StatCard
+    icon={Eye}
+    label="Total views"
+    value={totalViews}
+  />
+
+  <StatCard
+    icon={Trash2}
+    label="Rejected"
+    value={rejectedListings.length}
+  />
+</div>
 
             {/* My Listings */}
             <Card>
@@ -226,15 +243,19 @@ export default function Dashboard() {
                       >
                         {/* Thumb */}
                         <div className="h-12 w-16 shrink-0 overflow-hidden rounded-lg bg-muted">
-                          {p.photos[0] && (
+                          {p.photos?.[0] && p.photos[0].startsWith("http") ? (
                             <img
-                              src={p.photos[0].startsWith("http") ? p.photos[0] : ""}
-                              alt=""
+                              src={p.photos[0]}
+                              alt={p.title}
                               className="h-full w-full object-cover"
                               onError={(e) => {
-                                (e.target as HTMLImageElement).style.display = "none";
+                                (e.currentTarget as HTMLImageElement).style.display = "none";
                               }}
                             />
+                          ) : (
+                            <div className="h-full w-full flex items-center justify-center">
+                              <Building2 className="h-5 w-5 text-muted-foreground" />
+                            </div>
                           )}
                         </div>
 
@@ -274,9 +295,9 @@ export default function Dashboard() {
                           variant="ghost"
                           size="sm"
                           className="text-xs gap-1"
-                          onClick={() => navigate(`/property/${p._id}`)}
+                          onClick={() => navigate(`/post-property?edit=${p._id}`)}
                         >
-                          View
+                          Edit
                         </Button>
 
                         <AlertDialog>
@@ -523,18 +544,22 @@ function DashboardRecentListings() {
               onClick={() => navigate(`/property/${p._id}`)}
               className="flex w-full items-center gap-4 px-6 py-4 text-left hover:bg-muted/30 transition-colors"
             >
-              <div className="h-12 w-16 shrink-0 overflow-hidden rounded-lg bg-muted">
-                {p.photos[0] && (
-                  <img
-                    src={p.photos[0].startsWith("http") ? p.photos[0] : ""}
-                    alt=""
-                    className="h-full w-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = "none";
-                    }}
-                  />
-                )}
-              </div>
+             <div className="h-12 w-16 shrink-0 overflow-hidden rounded-md bg-muted">
+  {p.photos?.[0] && p.photos[0].startsWith("http") ? (
+    <img
+      src={p.photos[0]}
+      alt={p.title}
+      className="h-full w-full object-cover"
+      onError={(e) => {
+        (e.currentTarget as HTMLImageElement).style.display = "none";
+      }}
+    />
+  ) : (
+    <div className="h-full w-full flex items-center justify-center">
+      <Building2 className="h-5 w-5 text-muted-foreground" />
+    </div>
+  )}
+</div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-foreground truncate">
                   {p.title}

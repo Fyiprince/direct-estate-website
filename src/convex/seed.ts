@@ -402,6 +402,7 @@ export const runSeed = mutation({
         negotiable: p.negotiable,
         amenities: p.amenities,
         photos: p.photos,
+        phoneNumber: "9999999999",
         status: "live",
         isVerified: p.isVerified ?? false,
         isFeatured: p.isFeatured ?? false,

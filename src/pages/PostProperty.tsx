@@ -1,8 +1,8 @@
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useCallback } from "react";
-import { useNavigate } from "react-router";
+import { useState, useCallback, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 
@@ -69,6 +69,7 @@ type WizardData = {
   amenities: string[];
   photos: string[];
   videoUrl?: string;
+  phoneNumber?: string;
   availableFrom?: string;
 };
 
@@ -83,9 +84,17 @@ const TYPE_ICONS: Record<string, React.ReactNode> = {
 };
 
 export default function PostProperty() {
+  const [searchParams] = useSearchParams();
+const editId = searchParams.get("edit");
+console.log("EDIT ID:", editId);
   const navigate = useNavigate();
   const { user } = useAuth();
   const createProperty = useMutation(api.properties.createProperty);
+  const updateProperty = useMutation(api.properties.updateProperty);
+  const existingProperty = useQuery(
+  api.properties.get,
+  editId ? { id: editId as any } : "skip"
+);
   const generateUploadUrl = useMutation(api.properties.generateUploadUrl);
 
   const [step, setStep] = useState(0);
@@ -95,10 +104,43 @@ export default function PostProperty() {
     amenities: [],
     photos: [],
     negotiable: true,
+    phoneNumber: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
+  useEffect(() => {
+  if (!existingProperty) return;
+
+  setData({
+    listingFor: existingProperty.listingFor,
+    type: existingProperty.type,
+    city: existingProperty.city,
+    locality: existingProperty.locality,
+    address: existingProperty.address,
+    latitude: existingProperty.latitude,
+    longitude: existingProperty.longitude,
+    title: existingProperty.title,
+    description: existingProperty.description,
+    bhk: existingProperty.bhk,
+    areaSqft: existingProperty.areaSqft,
+    furnishing: existingProperty.furnishing,
+    floor: existingProperty.floor,
+    totalFloors: existingProperty.totalFloors,
+    ageOfProperty: existingProperty.ageOfProperty,
+    price: existingProperty.price,
+    deposit: existingProperty.deposit,
+    maintenance: existingProperty.maintenance,
+    negotiable: existingProperty.negotiable ?? true,
+    amenities: existingProperty.amenities ?? [],
+    photos: existingProperty.photos ?? [],
+    videoUrl: existingProperty.videoUrl,
+    phoneNumber: existingProperty.phoneNumber ?? "",
+    availableFrom: existingProperty.availableFrom
+      ? new Date(existingProperty.availableFrom).toISOString().split("T")[0]
+      : undefined,
+  });
+}, [existingProperty]);
 
   const update = (updates: Partial<WizardData>) => {
     setData((prev) => ({ ...prev, ...updates }));
@@ -164,6 +206,10 @@ export default function PostProperty() {
       if (!data.title || data.title.length < 6) e.title = "Min 6 characters for title";
       if (!data.areaSqft || data.areaSqft < 50) e.areaSqft = "Area must be at least 50 sq ft";
       if (!data.furnishing) e.furnishing = "Select furnishing";
+
+      const phone = data.phoneNumber?.trim() ?? "";
+      if (!phone) e.phoneNumber = "Phone number is required";
+      else if (!/^[0-9]{10}$/.test(phone)) e.phoneNumber = "Enter a valid 10-digit phone number";
     }
     if (step === 3) {
       if (!data.price || data.price < 1000) e.price = "Enter a valid price (min ₹1,000)";
@@ -206,8 +252,19 @@ export default function PostProperty() {
         return;
       }
 
-      await createProperty({ input: parsed.data });
-      toast.success("Listing submitted for admin approval");
+      if (editId) {
+        console.log("🔥 EDIT MODE - UPDATE PROPERTY", editId);
+           await updateProperty({
+    id: editId as any,
+    input: parsed.data,
+  });
+        toast.success("Listing updated successfully");
+      } else {
+  console.log("🔥 CREATE MODE - CREATE PROPERTY");
+
+  await createProperty({ input: parsed.data });
+      }
+
       navigate("/dashboard");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to create listing");
@@ -325,7 +382,7 @@ export default function PostProperty() {
               ) : (
                 <Check className="h-4 w-4" />
               )}
-              {submitting ? "Posting..." : "Post listing"}
+              {submitting ? (editId ? "Updating..." : "Posting...") : (editId ? "Update listing" : "Post listing")}
             </Button>
           )}
         </div>
@@ -529,6 +586,23 @@ function StepDetails({
           className="mt-1.5"
           rows={3}
         />
+      </div>
+
+      <div>
+        <Label htmlFor="phoneNumber" className="text-sm font-semibold">Contact Number *</Label>
+        <Input
+          id="phoneNumber"
+          type="tel"
+          inputMode="numeric"
+          autoComplete="tel"
+          value={data.phoneNumber ?? ""}
+          onChange={(e) => update({ phoneNumber: e.target.value.replace(/\D/g, "").slice(0, 10) })}
+          placeholder="Enter your 10-digit mobile number"
+          maxLength={10}
+          className="mt-1.5"
+        />
+        <p className="text-xs text-muted-foreground mt-1">This number will be used by interested tenants/buyers to contact you.</p>
+        {errors.phoneNumber && <p className="text-xs text-destructive mt-1">{errors.phoneNumber}</p>}
       </div>
 
       {showBhk && (
@@ -868,6 +942,7 @@ function StepReview({
           <button onClick={() => openStep(2)} className="text-xs text-primary hover:underline">Edit</button>
         </div>
         <p className="text-sm text-foreground mt-1">{data.title}</p>
+        {data.phoneNumber && <p className="text-sm text-muted-foreground mt-1">Contact: {data.phoneNumber}</p>}
         <div className="flex flex-wrap gap-3 mt-2 text-xs text-muted-foreground">
           {data.bhk && <span>{data.bhk} BHK</span>}
           <span>{data.areaSqft} sq.ft</span>

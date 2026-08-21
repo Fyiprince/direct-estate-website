@@ -26,12 +26,14 @@ export const PROPERTY_TYPES = [
   "villa",
   "commercial",
 ] as const;
+
 export const propertyTypeValidator = v.union(
   ...PROPERTY_TYPES.map((t) => v.literal(t)),
 );
 export type PropertyType = Infer<typeof propertyTypeValidator>;
 
 export const LISTING_FOR = ["rent", "sale"] as const;
+
 export const listingForValidator = v.union(
   ...LISTING_FOR.map((t) => v.literal(t)),
 );
@@ -42,6 +44,7 @@ export const FURNISHING = [
   "semi_furnished",
   "unfurnished",
 ] as const;
+
 export const furnishingValidator = v.union(
   ...FURNISHING.map((t) => v.literal(t)),
 );
@@ -53,6 +56,7 @@ export const LISTING_STATUS = [
   "rejected",
   "expired",
 ] as const;
+
 export const listingStatusValidator = v.union(
   ...LISTING_STATUS.map((t) => v.literal(t)),
 );
@@ -64,68 +68,94 @@ export const SORT_OPTIONS = [
   "price_asc",
   "price_desc",
 ] as const;
-export const sortValidator = v.union(...SORT_OPTIONS.map((t) => v.literal(t)));
+
+export const sortValidator = v.union(
+  ...SORT_OPTIONS.map((t) => v.literal(t)),
+);
 
 const schema = defineSchema(
   {
-    // default auth tables using convex auth.
-    ...authTables, // do not remove or modify
+    ...authTables,
 
-    // the users table is the default users table that is brought in by the authTables
     users: defineTable({
-      name: v.optional(v.string()), // name of the user. do not remove
-      image: v.optional(v.string()), // image of the user. do not remove
-      email: v.optional(v.string()), // email of the user. do not remove
-      emailVerificationTime: v.optional(v.number()), // email verification time. do not remove
-      phone: v.optional(v.string()), // contact number, masked in all API responses. do not remove
-      phoneVerificationTime: v.optional(v.number()), // phone verification time (phone OTP sign-in). do not remove
-      isAnonymous: v.optional(v.boolean()), // is the user anonymous. do not remove
+      name: v.optional(v.string()),
+      image: v.optional(v.string()),
+      email: v.optional(v.string()),
+      emailVerificationTime: v.optional(v.number()),
+      phone: v.optional(v.string()),
+      phoneVerificationTime: v.optional(v.number()),
+      isAnonymous: v.optional(v.boolean()),
 
-      role: v.optional(roleValidator), // OWNER | TENANT | ADMIN. do not remove
-      isVerified: v.optional(v.boolean()), // identity-verified owner badge
+      role: v.optional(roleValidator),
+      isVerified: v.optional(v.boolean()),
     })
-      .index("email", ["email"]) // index for the email. do not remove or modify
-      .index("phone", ["phone"]), // index for the verified phone. do not remove or modify
+      .index("email", ["email"])
+      .index("phone", ["phone"]),
 
-    // Property listings — one row per listed property.
     properties: defineTable({
       ownerId: v.id("users"),
       title: v.string(),
       description: v.optional(v.string()),
-      type: propertyTypeValidator, // flat | house | pg | villa | commercial
-      listingFor: listingForValidator, // rent | sale
+      type: propertyTypeValidator,
+      listingFor: listingForValidator,
       city: v.string(),
       locality: v.string(),
       address: v.string(),
       latitude: v.optional(v.number()),
       longitude: v.optional(v.number()),
-      bhk: v.optional(v.number()), // bedrooms, n/a for pg/commercial
+      bhk: v.optional(v.number()),
       areaSqft: v.number(),
       furnishing: furnishingValidator,
       floor: v.optional(v.number()),
       totalFloors: v.optional(v.number()),
-      ageOfProperty: v.optional(v.number()), // years
-      price: v.number(), // monthly rent (rent) or total price (sale), in rupees
-      deposit: v.optional(v.number()), // rent only
-      maintenance: v.optional(v.number()), // rent only, monthly
+      ageOfProperty: v.optional(v.number()),
+      price: v.number(),
+      deposit: v.optional(v.number()),
+      maintenance: v.optional(v.number()),
       negotiable: v.boolean(),
       amenities: v.array(v.string()),
-      photos: v.array(v.string()), // Convex storage ids or external URLs
+      photos: v.array(v.string()),
       videoUrl: v.optional(v.string()),
-      status: listingStatusValidator, // pending | live | rejected | expired
-      isVerified: v.boolean(), // owner identity verified
+
+      // Required contact number for every property listing.
+      // Stored separately from users.phone because a listing has
+      // its own contact information.
+      phoneNumber: v.string(),
+
+      status: listingStatusValidator,
+      isVerified: v.boolean(),
       isFeatured: v.boolean(),
       viewCount: v.number(),
-      availableFrom: v.optional(v.number()), // epoch ms
-      createdAt: v.number(), // epoch ms
-      updatedAt: v.number(), // epoch ms
+      availableFrom: v.optional(v.number()),
+      createdAt: v.number(),
+      updatedAt: v.number(),
     })
       .index("by_status", ["status"])
       .index("by_owner", ["ownerId"])
       .index("by_city_status", ["city", "status"])
       .index("by_type_status", ["type", "status"]),
 
-    // add other tables here
+    inquiries: defineTable({
+      propertyId: v.id("properties"),
+      customerId: v.id("users"),
+
+      name: v.string(),
+      email: v.string(),
+      phone: v.string(),
+      message: v.string(),
+
+      status: v.union(
+        v.literal("new"),
+        v.literal("contacted"),
+        v.literal("closed"),
+      ),
+
+      createdAt: v.number(),
+      updatedAt: v.number(),
+    })
+      .index("by_property", ["propertyId"])
+      .index("by_customer", ["customerId"])
+      .index("by_status", ["status"]),
   },
   {
     schemaValidation: false,
