@@ -17,6 +17,7 @@ import { Switch } from "@/components/ui/switch";
 import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
 import { LocationPicker } from "@/components/property/location-picker";
+import { PropertyImage } from "@/components/property/property-image";
 import { cn } from "@/lib/utils";
 import {
   CITIES,
@@ -853,16 +854,11 @@ function StepPhotos({
       {data.photos.length > 0 && (
         <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
           {data.photos.map((photo, i) => (
-            <div key={i} className="group relative aspect-[4/3] overflow-hidden rounded-lg bg-muted">
-              <img
-                src={`${import.meta.env.VITE_CONVEX_URL}/api/storage/${photo}`}
+            <div key={photo} className="group relative aspect-[4/3] overflow-hidden rounded-lg bg-muted">
+              <PropertyImage
+                src={photo}
                 alt={`Photo ${i + 1}`}
-                className="h-full w-full object-cover"
-                loading="lazy"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src =
-                    "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=400&q=40";
-                }}
+                className="h-full w-full"
               />
               <button
                 onClick={() => removePhoto(i)}

@@ -37,7 +37,10 @@ const NAV_LINKS = [
   { href: "/search?purpose=rent&type=commercial", label: "Commercial" },
 ];
 
-export function SiteHeader({ variant = "default", hidePostCta }: SiteHeaderProps) {
+export function SiteHeader({
+  variant = "default",
+  hidePostCta,
+}: SiteHeaderProps) {
   const { isAuthenticated, isLoading, user, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -48,22 +51,42 @@ export function SiteHeader({ variant = "default", hidePostCta }: SiteHeaderProps
     navigate("/");
   };
 
+  const isTransparent = variant === "transparent";
+
   return (
     <header
       className={cn(
         "sticky top-0 z-50 w-full border-b transition-colors",
-        variant === "transparent"
+        isTransparent
           ? "border-transparent bg-transparent"
           : "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-border/50",
       )}
     >
       <div className="mx-auto flex h-14 sm:h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 shrink-0">
-          <div className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+        <Link
+          to="/"
+          className="flex items-center gap-2 shrink-0"
+        >
+          <div
+            className={cn(
+              "flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-lg",
+              isTransparent
+                ? "bg-white text-primary shadow-sm"
+                : "bg-primary text-primary-foreground",
+            )}
+          >
             <Building2 className="h-4 w-4 sm:h-5 sm:w-5" />
           </div>
-          <span className="text-base sm:text-lg font-bold tracking-tight text-foreground">
+
+          <span
+            className={cn(
+              "text-base sm:text-lg font-bold tracking-tight",
+              isTransparent
+                ? "text-white"
+                : "text-foreground",
+            )}
+          >
             EstateDirect
           </span>
         </Link>
@@ -71,9 +94,11 @@ export function SiteHeader({ variant = "default", hidePostCta }: SiteHeaderProps
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-0.5">
           {NAV_LINKS.map((link) => {
-            const isActive = location.search === link.href.split("?")[1] || (
-              link.href.includes("purpose=rent") && location.search.includes("purpose=rent")
-            );
+            const isActive =
+              location.search === link.href.split("?")[1] ||
+              (link.href.includes("purpose=rent") &&
+                location.search.includes("purpose=rent"));
+
             return (
               <Button
                 key={link.href}
@@ -81,9 +106,13 @@ export function SiteHeader({ variant = "default", hidePostCta }: SiteHeaderProps
                 size="sm"
                 className={cn(
                   "text-sm font-medium transition-colors px-3",
-                  isActive
-                    ? "text-primary bg-primary/5"
-                    : "text-muted-foreground hover:text-foreground",
+                  isTransparent
+                    ? isActive
+                      ? "text-white bg-white/15 hover:bg-white/20"
+                      : "text-white/80 hover:text-white hover:bg-white/10"
+                    : isActive
+                      ? "text-primary bg-primary/5"
+                      : "text-muted-foreground hover:text-foreground",
                 )}
                 onClick={() => navigate(link.href)}
               >
@@ -95,11 +124,16 @@ export function SiteHeader({ variant = "default", hidePostCta }: SiteHeaderProps
 
         {/* Right side */}
         <div className="flex items-center gap-1.5 sm:gap-2">
-          {/* Search (mobile) */}
+          {/* Search mobile */}
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden h-8 w-8"
+            className={cn(
+              "md:hidden h-8 w-8",
+              isTransparent
+                ? "text-white hover:bg-white/10 hover:text-white"
+                : "text-foreground",
+            )}
             onClick={() => navigate("/search")}
           >
             <Search className="h-4 w-4" />
@@ -112,8 +146,11 @@ export function SiteHeader({ variant = "default", hidePostCta }: SiteHeaderProps
               size="sm"
               className="hidden sm:inline-flex gap-1.5 text-xs sm:text-sm font-semibold bg-primary hover:bg-primary/90"
               onClick={() => {
-                if (isAuthenticated) navigate("/post-property");
-                else navigate("/auth?returnTo=/post-property");
+                if (isAuthenticated) {
+                  navigate("/post-property");
+                } else {
+                  navigate("/auth?returnTo=/post-property");
+                }
               }}
             >
               <PlusCircle className="h-4 w-4 shrink-0" />
@@ -121,21 +158,43 @@ export function SiteHeader({ variant = "default", hidePostCta }: SiteHeaderProps
             </Button>
           )}
 
+          {/* Auth / Profile */}
           {isLoading ? null : isAuthenticated && user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9 rounded-full">
-                  <Avatar className="h-7 w-7 sm:h-8 sm:w-8">
-                    <AvatarFallback className="text-[10px] sm:text-xs bg-primary/10 text-primary">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={cn(
+                    "h-9 w-9 sm:h-10 sm:w-10 rounded-full p-0 transition-all",
+                    isTransparent
+                      ? "bg-white/95 hover:bg-white border border-white/70 shadow-md hover:shadow-lg"
+                      : "bg-background hover:bg-muted border border-border/60 shadow-sm",
+                  )}
+                >
+                  <Avatar className="h-8 w-8 sm:h-9 sm:w-9">
+                    <AvatarFallback
+                      className={cn(
+                        "text-[10px] sm:text-xs font-bold",
+                        isTransparent
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-primary text-primary-foreground",
+                      )}
+                    >
                       {initials(user.name)}
                     </AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-52">
+
+              <DropdownMenuContent
+                align="end"
+                className="w-52"
+              >
                 <div className="px-2 py-1.5 text-sm font-medium text-foreground truncate">
                   {user.name ?? "User"}
                 </div>
+
                 {user.role && (
                   <div className="px-2 pb-1">
                     <Badge
@@ -146,7 +205,9 @@ export function SiteHeader({ variant = "default", hidePostCta }: SiteHeaderProps
                     </Badge>
                   </div>
                 )}
+
                 <DropdownMenuSeparator />
+
                 <DropdownMenuItem
                   onClick={() => navigate("/dashboard")}
                   className="cursor-pointer"
@@ -154,6 +215,7 @@ export function SiteHeader({ variant = "default", hidePostCta }: SiteHeaderProps
                   <LayoutDashboard className="mr-2 h-4 w-4" />
                   Dashboard
                 </DropdownMenuItem>
+
                 <DropdownMenuItem
                   onClick={() => navigate("/search")}
                   className="cursor-pointer"
@@ -161,6 +223,7 @@ export function SiteHeader({ variant = "default", hidePostCta }: SiteHeaderProps
                   <Search className="mr-2 h-4 w-4" />
                   Search
                 </DropdownMenuItem>
+
                 {user.role === "admin" && (
                   <DropdownMenuItem
                     onClick={() => navigate("/admin")}
@@ -170,6 +233,7 @@ export function SiteHeader({ variant = "default", hidePostCta }: SiteHeaderProps
                     Admin panel
                   </DropdownMenuItem>
                 )}
+
                 {user.role !== "owner" && (
                   <DropdownMenuItem
                     onClick={() => navigate("/post-property")}
@@ -179,7 +243,9 @@ export function SiteHeader({ variant = "default", hidePostCta }: SiteHeaderProps
                     Post a property
                   </DropdownMenuItem>
                 )}
+
                 <DropdownMenuSeparator />
+
                 <DropdownMenuItem
                   onClick={handleSignOut}
                   className="cursor-pointer text-destructive focus:text-destructive"
@@ -193,7 +259,11 @@ export function SiteHeader({ variant = "default", hidePostCta }: SiteHeaderProps
             <Button
               variant="outline"
               size="sm"
-              className="text-xs sm:text-sm gap-1.5"
+              className={cn(
+                "text-xs sm:text-sm gap-1.5",
+                isTransparent &&
+                  "border-white/60 bg-white/10 text-white hover:bg-white hover:text-primary",
+              )}
               onClick={() => navigate("/auth")}
             >
               <User className="h-4 w-4" />
@@ -205,10 +275,19 @@ export function SiteHeader({ variant = "default", hidePostCta }: SiteHeaderProps
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden h-8 w-8"
+            className={cn(
+              "md:hidden h-8 w-8",
+              isTransparent
+                ? "text-white hover:bg-white/10 hover:text-white"
+                : "text-foreground",
+            )}
             onClick={() => setMobileOpen(!mobileOpen)}
           >
-            {mobileOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+            {mobileOpen ? (
+              <X className="h-4 w-4" />
+            ) : (
+              <Menu className="h-4 w-4" />
+            )}
           </Button>
         </div>
       </div>
@@ -229,12 +308,17 @@ export function SiteHeader({ variant = "default", hidePostCta }: SiteHeaderProps
               {link.label}
             </Button>
           ))}
+
           {!hidePostCta && (
             <Button
               variant="default"
               className="w-full gap-1.5 mt-2"
               onClick={() => {
-                navigate(isAuthenticated ? "/post-property" : "/auth?returnTo=/post-property");
+                navigate(
+                  isAuthenticated
+                    ? "/post-property"
+                    : "/auth?returnTo=/post-property",
+                );
                 setMobileOpen(false);
               }}
             >

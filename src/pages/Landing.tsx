@@ -472,7 +472,7 @@ export default function Landing() {
             <Button
               variant="outline"
               size="lg"
-              className="border-blue-400/50 text-white hover:bg-blue-700/50 gap-2"
+              className="border-blue-400/50 !text-white bg-transparent hover:bg-blue-700/50 hover:!text-white gap-2"
               onClick={() => navigate("/search")}
             >
               <Search className="h-5 w-5" />
