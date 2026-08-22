@@ -135,6 +135,15 @@ const schema = defineSchema(
       .index("by_city_status", ["city", "status"])
       .index("by_type_status", ["type", "status"]),
 
+    // Tracks unique property views per browser visitor.
+    // Prevents the same visitor from repeatedly inflating
+    // a property's view count.
+    propertyViews: defineTable({
+      propertyId: v.id("properties"),
+      visitorId: v.string(),
+      createdAt: v.number(),
+    }).index("by_property_visitor", ["propertyId", "visitorId"]),
+
     inquiries: defineTable({
       propertyId: v.id("properties"),
       customerId: v.id("users"),
@@ -158,7 +167,7 @@ const schema = defineSchema(
       .index("by_status", ["status"]),
   },
   {
-    schemaValidation: false,
+    schemaValidation: true,
   },
 );
 

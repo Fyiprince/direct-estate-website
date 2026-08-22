@@ -9,6 +9,7 @@ import { ROLES, roleValidator } from "./schema";
  */
 export const claimAdmin = mutation({
   args: {},
+
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
 
@@ -17,7 +18,19 @@ export const claimAdmin = mutation({
     }
 
     const me = await ctx.db.get(userId);
-    const email = me?.email?.trim().toLowerCase();
+
+    if (!me) {
+      throw new Error("User account not found");
+    }
+
+    // Anonymous accounts can never become admins.
+    if (me.isAnonymous === true) {
+      throw new Error(
+        "Anonymous accounts cannot claim admin access",
+      );
+    }
+
+    const email = me.email?.trim().toLowerCase();
 
     if (!email) {
       throw new Error(
@@ -25,8 +38,8 @@ export const claimAdmin = mutation({
       );
     }
 
-    // Admin email MUST be configured through Convex environment variables.
-    const adminEmailEnv = process.env.ESTATEDIRECT_ADMIN_EMAIL;
+    const adminEmailEnv =
+      process.env.ESTATEDIRECT_ADMIN_EMAIL;
 
     if (!adminEmailEnv) {
       throw new Error(
@@ -41,7 +54,7 @@ export const claimAdmin = mutation({
 
     if (!allowlist.includes(email)) {
       throw new Error(
-        "This email is not in the admin allowlist (ESTATEDIRECT_ADMIN_EMAIL).",
+        "This email is not in the admin allowlist.",
       );
     }
 
@@ -49,13 +62,17 @@ export const claimAdmin = mutation({
       role: ROLES.ADMIN,
     });
 
-    return { role: ROLES.ADMIN };
+    return {
+      role: ROLES.ADMIN,
+    };
   },
 });
 
 /**
  * Set the account role during onboarding.
- * Admins cannot be self-assigned through this mutation.
+ *
+ * Normal users may select OWNER or TENANT.
+ * ADMIN can only be provisioned through claimAdmin.
  */
 export const setRole = mutation({
   args: {
@@ -69,9 +86,32 @@ export const setRole = mutation({
       throw new Error("Sign in required");
     }
 
+    const me = await ctx.db.get(userId);
+
+    if (!me) {
+      throw new Error("User account not found");
+    }
+
+    // Anonymous accounts must not be able to obtain
+    // an owner/tenant role.
+    if (me.isAnonymous === true) {
+      throw new Error(
+        "Anonymous accounts cannot select an account role",
+      );
+    }
+
+    // ADMIN can never be assigned through this endpoint.
     if (role === ROLES.ADMIN) {
       throw new Error(
         "Admins are provisioned by EstateDirect",
+      );
+    }
+
+    // Existing admins cannot be downgraded through
+    // the normal onboarding endpoint.
+    if (me.role === ROLES.ADMIN) {
+      throw new Error(
+        "Admin accounts cannot change their role here",
       );
     }
 
@@ -79,7 +119,9 @@ export const setRole = mutation({
       role,
     });
 
-    return { role };
+    return {
+      role,
+    };
   },
 });
 
@@ -96,6 +138,18 @@ export const setPhone = mutation({
 
     if (userId === null) {
       throw new Error("Sign in required");
+    }
+
+    const me = await ctx.db.get(userId);
+
+    if (!me) {
+      throw new Error("User account not found");
+    }
+
+    if (me.isAnonymous === true) {
+      throw new Error(
+        "Anonymous accounts cannot set a phone number",
+      );
     }
 
     const digits = phone.replace(/\D/g, "");

@@ -85,7 +85,7 @@ export default function Admin() {
 
   const approveListing = useMutation(api.admin.approveListing);
   const rejectListing = useMutation(api.admin.rejectListing);
-  const deleteProperty = useMutation(api.properties.deleteProperty);
+  const deleteListing = useMutation(api.admin.deleteListing);
 
   // Customer inquiries - admin only
   const inquiries = useQuery(api.inquiries.listForAdmin, {});
@@ -135,7 +135,7 @@ export default function Admin() {
     setActing(id);
 
     try {
-      await deleteProperty({
+      await deleteListing({
         id: id as Id<"properties">,
       });
 
@@ -405,6 +405,15 @@ export default function Admin() {
               <div className="space-y-3">
                 <Skeleton className="h-20 w-full" />
                 <Skeleton className="h-20 w-full" />
+              </div>
+            ) : inquiries === null ? (
+              <div className="py-10 text-center">
+                <p className="font-medium text-foreground">
+                  Access denied.
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Admin access is required to view customer inquiries.
+                </p>
               </div>
             ) : inquiries.length === 0 ? (
               <div className="py-10 text-center">

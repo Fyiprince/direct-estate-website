@@ -33,6 +33,7 @@ import {
   PURPOSE_LABELS,
   FURNISHING_LABELS,
 } from "@/lib/property";
+
 import {
   MapPin,
   ChevronLeft,
@@ -54,10 +55,15 @@ export default function PropertyDetailPage() {
   const navigate = useNavigate();
 
   const createInquiry = useMutation(api.inquiries.create);
+  const incrementView = useMutation(
+    api.properties.incrementView,
+  );
 
   const property = useQuery(
     api.properties.get,
-    id ? { id: id as Id<"properties"> } : "skip",
+    id
+      ? { id: id as Id<"properties"> }
+      : "skip",
   );
 
   const similar = useQuery(
@@ -72,33 +78,76 @@ export default function PropertyDetailPage() {
       : "skip",
   );
 
-  const incrementView = useMutation(api.properties.incrementView);
   const viewIncremented = useRef(false);
 
-  const [photoIndex, setPhotoIndex] = useState(0);
-  const [copied, setCopied] = useState(false);
-  const [inquiryOpen, setInquiryOpen] = useState(false);
-  const [inquiryName, setInquiryName] = useState("");
-const [inquiryEmail, setInquiryEmail] = useState("");
-const [inquiryPhone, setInquiryPhone] = useState("");
-const [inquiryMessage, setInquiryMessage] = useState("");
+  const [photoIndex, setPhotoIndex] =
+    useState(0);
 
-  // Increment view once per session
+  const [copied, setCopied] =
+    useState(false);
+
+  const [inquiryOpen, setInquiryOpen] =
+    useState(false);
+
+  const [inquiryName, setInquiryName] =
+    useState("");
+
+  const [inquiryEmail, setInquiryEmail] =
+    useState("");
+
+  const [inquiryPhone, setInquiryPhone] =
+    useState("");
+
+  const [inquiryMessage, setInquiryMessage] =
+    useState("");
+
+  // Increment property view once per browser visitor.
   useEffect(() => {
-    if (id && !viewIncremented.current) {
-      viewIncremented.current = true;
-      incrementView({ id: id as Id<"properties"> });
+    if (!id || viewIncremented.current) {
+      return;
     }
+
+    let visitorId = localStorage.getItem(
+      "estatedirect_visitor_id",
+    );
+
+    if (!visitorId) {
+      visitorId = crypto.randomUUID();
+
+      localStorage.setItem(
+        "estatedirect_visitor_id",
+        visitorId,
+      );
+    }
+
+    viewIncremented.current = true;
+
+    incrementView({
+      id: id as Id<"properties">,
+      visitorId,
+    }).catch((error) => {
+      console.error(
+        "Failed to record property view:",
+        error,
+      );
+    });
   }, [id, incrementView]);
 
   const handleCopyPhone = async () => {
     if (property?.owner?.phone) {
       try {
-        await navigator.clipboard.writeText(property.owner.phone);
+        await navigator.clipboard.writeText(
+          property.owner.phone,
+        );
+
         setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
+
+        setTimeout(
+          () => setCopied(false),
+          2000,
+        );
       } catch {
-        // fallback
+        // Clipboard fallback.
       }
     }
   };
@@ -137,7 +186,9 @@ const [inquiryMessage, setInquiryMessage] = useState("");
 
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <h1 className="text-2xl font-bold">Property not found</h1>
+            <h1 className="text-2xl font-bold">
+              Property not found
+            </h1>
 
             <p className="text-muted-foreground mt-2">
               This listing may have been removed or is no longer available.
@@ -146,7 +197,9 @@ const [inquiryMessage, setInquiryMessage] = useState("");
             <Button
               variant="default"
               className="mt-6"
-              onClick={() => navigate("/search")}
+              onClick={() =>
+                navigate("/search")
+              }
             >
               Browse properties
             </Button>
@@ -158,12 +211,31 @@ const [inquiryMessage, setInquiryMessage] = useState("");
     );
   }
 
+  /*
+   * Public property responses may contain nullable
+   * photo values. Filter them here so every photo
+   * passed to PropertyImage is guaranteed to be a string.
+   */
+  const validPhotos: string[] = Array.from(
+    property.photos ?? [],
+  ).filter(
+    (photo): photo is string =>
+      typeof photo === "string" &&
+      photo.length > 0,
+  );
+
   const photos =
-    property.photos.length > 0
-      ? property.photos
+    validPhotos.length > 0
+      ? validPhotos
       : [
           "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=1200&q=60",
         ];
+
+  // Prevent an invalid index if the photo list changes.
+  const safePhotoIndex =
+    photoIndex < photos.length
+      ? photoIndex
+      : 0;
 
   return (
     <motion.div
@@ -191,7 +263,7 @@ const [inquiryMessage, setInquiryMessage] = useState("");
             <div className="relative overflow-hidden rounded-xl bg-muted">
               <div className="aspect-[16/9]">
                 <PropertyImage
-                  src={photos[photoIndex]}
+                  src={photos[safePhotoIndex]}
                   alt={property.title}
                   className="h-full w-full"
                   priority
@@ -203,7 +275,11 @@ const [inquiryMessage, setInquiryMessage] = useState("");
                   <button
                     onClick={() =>
                       setPhotoIndex(
-                        (i) => (i - 1 + photos.length) % photos.length,
+                        (i) =>
+                          (i -
+                            1 +
+                            photos.length) %
+                          photos.length,
                       )
                     }
                     className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-black/50 p-2 text-white hover:bg-black/70 transition-colors"
@@ -213,7 +289,11 @@ const [inquiryMessage, setInquiryMessage] = useState("");
 
                   <button
                     onClick={() =>
-                      setPhotoIndex((i) => (i + 1) % photos.length)
+                      setPhotoIndex(
+                        (i) =>
+                          (i + 1) %
+                          photos.length,
+                      )
                     }
                     className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-black/50 p-2 text-white hover:bg-black/70 transition-colors"
                   >
@@ -221,49 +301,59 @@ const [inquiryMessage, setInquiryMessage] = useState("");
                   </button>
 
                   <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-                    {photos.slice(0, 7).map((_, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setPhotoIndex(i)}
-                        className={cn(
-                          "h-2 rounded-full transition-all",
-                          i === photoIndex
-                            ? "w-6 bg-white"
-                            : "w-2 bg-white/50 hover:bg-white/70",
-                        )}
-                      />
-                    ))}
+                    {photos
+                      .slice(0, 7)
+                      .map((_, i) => (
+                        <button
+                          key={i}
+                          onClick={() =>
+                            setPhotoIndex(i)
+                          }
+                          className={cn(
+                            "h-2 rounded-full transition-all",
+                            i ===
+                              safePhotoIndex
+                              ? "w-6 bg-white"
+                              : "w-2 bg-white/50 hover:bg-white/70",
+                          )}
+                        />
+                      ))}
                   </div>
                 </>
               )}
 
-              {/* Photo count */}
               <div className="absolute right-3 top-3 rounded-full bg-black/60 px-2.5 py-1 text-xs text-white">
-                {photoIndex + 1} / {photos.length}
+                {safePhotoIndex + 1} /{" "}
+                {photos.length}
               </div>
             </div>
 
             {/* Thumbnail strip */}
             {photos.length > 1 && (
               <div className="flex gap-2 overflow-x-auto pb-1">
-                {photos.map((photo, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setPhotoIndex(i)}
-                    className={cn(
-                      "h-16 w-24 shrink-0 overflow-hidden rounded-lg border-2 transition-all",
-                      i === photoIndex
-                        ? "border-primary opacity-100"
-                        : "border-transparent opacity-60 hover:opacity-90",
-                    )}
-                  >
-                    <PropertyImage
-                      src={photo}
-                      alt=""
-                      className="h-full w-full"
-                    />
-                  </button>
-                ))}
+                {photos.map(
+                  (photo, i) => (
+                    <button
+                      key={i}
+                      onClick={() =>
+                        setPhotoIndex(i)
+                      }
+                      className={cn(
+                        "h-16 w-24 shrink-0 overflow-hidden rounded-lg border-2 transition-all",
+                        i ===
+                          safePhotoIndex
+                          ? "border-primary opacity-100"
+                          : "border-transparent opacity-60 hover:opacity-90",
+                      )}
+                    >
+                      <PropertyImage
+                        src={photo}
+                        alt=""
+                        className="h-full w-full"
+                      />
+                    </button>
+                  ),
+                )}
               </div>
             )}
 
@@ -273,16 +363,28 @@ const [inquiryMessage, setInquiryMessage] = useState("");
                 <Badge
                   className={cn(
                     "text-xs font-semibold",
-                    property.listingFor === "rent"
+                    property.listingFor ===
+                      "rent"
                       ? "bg-blue-600 text-white"
                       : "bg-amber-500 text-white",
                   )}
                 >
-                  {PURPOSE_LABELS[property.listingFor]}
+                  {
+                    PURPOSE_LABELS[
+                      property.listingFor
+                    ]
+                  }
                 </Badge>
 
-                <Badge variant="secondary" className="text-xs capitalize">
-                  {PROPERTY_TYPE_LABELS[property.type]}
+                <Badge
+                  variant="secondary"
+                  className="text-xs capitalize"
+                >
+                  {
+                    PROPERTY_TYPE_LABELS[
+                      property.type
+                    ]
+                  }
                 </Badge>
 
                 {property.isVerified && (
@@ -307,7 +409,8 @@ const [inquiryMessage, setInquiryMessage] = useState("");
                 <MapPin className="h-4 w-4 shrink-0" />
 
                 <span>
-                  {property.locality}, {property.city}
+                  {property.locality},{" "}
+                  {property.city}
                 </span>
               </div>
 
@@ -319,7 +422,10 @@ const [inquiryMessage, setInquiryMessage] = useState("");
 
                 <span className="flex items-center gap-1">
                   <Clock className="h-3.5 w-3.5" />
-                  Listed {relativeTime(property.createdAt)}
+                  Listed{" "}
+                  {relativeTime(
+                    property.createdAt,
+                  )}
                 </span>
               </div>
             </div>
@@ -330,40 +436,63 @@ const [inquiryMessage, setInquiryMessage] = useState("");
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               <SpecItem
                 label="Price"
-                value={formatPriceCompact(property.price)}
-                sub={property.listingFor === "rent" ? "/ month" : ""}
+                value={formatPriceCompact(
+                  property.price,
+                )}
+                sub={
+                  property.listingFor ===
+                  "rent"
+                    ? "/ month"
+                    : ""
+                }
               />
 
               {property.bhk && (
-                <SpecItem label="Type" value={`${property.bhk} BHK`} />
+                <SpecItem
+                  label="Type"
+                  value={`${property.bhk} BHK`}
+                />
               )}
 
               <SpecItem
                 label="Area"
-                value={formatArea(property.areaSqft)}
+                value={formatArea(
+                  property.areaSqft,
+                )}
               />
 
               <SpecItem
                 label="Furnishing"
-                value={FURNISHING_LABELS[property.furnishing]}
+                value={
+                  FURNISHING_LABELS[
+                    property.furnishing
+                  ]
+                }
               />
 
-              {property.deposit != null && (
+              {property.deposit !=
+                null && (
                 <SpecItem
                   label="Deposit"
-                  value={formatPriceCompact(property.deposit)}
+                  value={formatPriceCompact(
+                    property.deposit,
+                  )}
                 />
               )}
 
-              {property.maintenance != null && (
+              {property.maintenance !=
+                null && (
                 <SpecItem
                   label="Maintenance"
-                  value={formatPriceCompact(property.maintenance)}
+                  value={formatPriceCompact(
+                    property.maintenance,
+                  )}
                   sub="/ month"
                 />
               )}
 
-              {property.floor != null && (
+              {property.floor !=
+                null && (
                 <SpecItem
                   label="Floor"
                   value={`${property.floor}${
@@ -376,10 +505,13 @@ const [inquiryMessage, setInquiryMessage] = useState("");
 
               <SpecItem
                 label="Available from"
-                value={formatDate(property.availableFrom)}
+                value={formatDate(
+                  property.availableFrom,
+                )}
               />
 
-              {property.ageOfProperty != null && (
+              {property.ageOfProperty !=
+                null && (
                 <SpecItem
                   label="Age"
                   value={`${property.ageOfProperty} years`}
@@ -411,20 +543,23 @@ const [inquiryMessage, setInquiryMessage] = useState("");
               </h2>
 
               <div className="flex flex-wrap gap-2">
-                {property.amenities.length === 0 ? (
+                {property.amenities
+                  .length === 0 ? (
                   <p className="text-sm text-muted-foreground">
                     Not specified
                   </p>
                 ) : (
-                  property.amenities.map((amenity) => (
-                    <span
-                      key={amenity}
-                      className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-xs font-medium text-foreground"
-                    >
-                      <CheckCircle2 className="h-3 w-3 text-blue-500" />
-                      {amenity}
-                    </span>
-                  ))
+                  property.amenities.map(
+                    (amenity) => (
+                      <span
+                        key={amenity}
+                        className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-xs font-medium text-foreground"
+                      >
+                        <CheckCircle2 className="h-3 w-3 text-blue-500" />
+                        {amenity}
+                      </span>
+                    ),
+                  )
                 )}
               </div>
             </div>
@@ -441,11 +576,17 @@ const [inquiryMessage, setInquiryMessage] = useState("");
                 {property.address}
               </p>
 
-              {property.latitude != null &&
-              property.longitude != null ? (
+              {property.latitude !=
+                null &&
+              property.longitude !=
+                null ? (
                 <MapView
-                  latitude={property.latitude}
-                  longitude={property.longitude}
+                  latitude={
+                    property.latitude
+                  }
+                  longitude={
+                    property.longitude
+                  }
                   label={`${property.locality}, ${property.city}`}
                   className="mt-3"
                 />
@@ -463,17 +604,22 @@ const [inquiryMessage, setInquiryMessage] = useState("");
               {/* Price card */}
               <div>
                 <p className="text-3xl font-bold text-foreground">
-                  {formatINR(property.price)}
+                  {formatINR(
+                    property.price,
+                  )}
                 </p>
 
-                {property.listingFor === "rent" && (
+                {property.listingFor ===
+                  "rent" && (
                   <p className="text-sm text-muted-foreground mt-1">
                     per month
-                    {property.negotiable && " (negotiable)"}
+                    {property.negotiable &&
+                      " (negotiable)"}
                   </p>
                 )}
 
-                {property.listingFor === "sale" && (
+                {property.listingFor ===
+                  "sale" && (
                   <p className="text-sm text-muted-foreground mt-1">
                     {property.negotiable
                       ? "Negotiable"
@@ -494,7 +640,11 @@ const [inquiryMessage, setInquiryMessage] = useState("");
                   <Avatar className="h-12 w-12">
                     <AvatarFallback className="bg-primary/10 text-primary font-semibold">
                       {property.owner
-                        ? initials(property.owner.name)
+                        ? initials(
+                            property
+                              .owner
+                              .name,
+                          )
                         : "O"}
                     </AvatarFallback>
                   </Avatar>
@@ -502,16 +652,20 @@ const [inquiryMessage, setInquiryMessage] = useState("");
                   <div>
                     <div className="flex items-center gap-1.5">
                       <p className="text-sm font-semibold text-foreground">
-                        {property.owner?.name ?? "Owner"}
+                        {property.owner
+                          ?.name ??
+                          "Owner"}
                       </p>
 
-                      {property.owner?.isVerified && (
+                      {property.owner
+                        ?.isVerified && (
                         <ShieldCheck className="h-4 w-4 text-blue-500" />
                       )}
                     </div>
 
                     <p className="text-xs text-muted-foreground">
-                      {property.owner?.isVerified
+                      {property.owner
+                        ?.isVerified
                         ? "Verified owner"
                         : "Owner"}
                     </p>
@@ -534,7 +688,11 @@ const [inquiryMessage, setInquiryMessage] = useState("");
                         <Phone className="h-4 w-4 text-muted-foreground" />
 
                         <span className="text-lg font-semibold tracking-widest text-foreground">
-                          {property.owner.phone}
+                          {
+                            property
+                              .owner
+                              .phone
+                          }
                         </span>
                       </div>
 
@@ -545,7 +703,9 @@ const [inquiryMessage, setInquiryMessage] = useState("");
                               variant="ghost"
                               size="icon"
                               className="h-8 w-8"
-                              onClick={handleCopyPhone}
+                              onClick={
+                                handleCopyPhone
+                              }
                             >
                               {copied ? (
                                 <Check className="h-4 w-4 text-blue-500" />
@@ -556,7 +716,9 @@ const [inquiryMessage, setInquiryMessage] = useState("");
                           </TooltipTrigger>
 
                           <TooltipContent side="left">
-                            {copied ? "Copied!" : "Copy number"}
+                            {copied
+                              ? "Copied!"
+                              : "Copy number"}
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -569,6 +731,7 @@ const [inquiryMessage, setInquiryMessage] = useState("");
                 ) : (
                   <p className="flex items-start gap-2 text-xs text-muted-foreground leading-relaxed">
                     <Lock className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+
                     Owner contact details are shared only with EstateDirect
                     administrators for verification. Direct contact unlock is
                     coming in the next update.
@@ -577,14 +740,17 @@ const [inquiryMessage, setInquiryMessage] = useState("");
               </div>
 
               <div className="space-y-2">
-               <Button
-  className="w-full gap-2"
-  size="lg"
-  onClick={() => setInquiryOpen(true)}
->
-  <MessageCircle className="h-4 w-4" />
-  Send inquiry
-</Button>
+                <Button
+                  className="w-full gap-2"
+                  size="lg"
+                  onClick={() =>
+                    setInquiryOpen(true)
+                  }
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  Send inquiry
+                </Button>
+
                 <Button
                   variant="outline"
                   className="w-full gap-2"
@@ -607,92 +773,154 @@ const [inquiryMessage, setInquiryMessage] = useState("");
         </div>
 
         {/* Similar properties */}
-        {similar && similar.length > 0 && (
-          <section className="mt-12">
-            <Separator className="mb-8" />
+        {similar &&
+          similar.length > 0 && (
+            <section className="mt-12">
+              <Separator className="mb-8" />
 
-            <h2 className="text-xl font-bold text-foreground mb-6">
-              Similar properties in {property.city}
-            </h2>
+              <h2 className="text-xl font-bold text-foreground mb-6">
+                Similar properties in{" "}
+                {property.city}
+              </h2>
 
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-              {similar.map((p) => (
-                <PropertyCard key={p._id} property={p} />
-              ))}
-            </div>
-          </section>
-        )}
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+                {similar.map((p) => (
+                  <PropertyCard
+                    key={p._id}
+                    property={p}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
       </main>
 
+      {/* Inquiry Modal */}
       {inquiryOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setInquiryOpen(false)}>
-          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() =>
+            setInquiryOpen(false)
+          }
+        >
+          <div
+            className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl"
+            onClick={(e) =>
+              e.stopPropagation()
+            }
+          >
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-foreground">Send Inquiry</h2>
-              <button type="button" onClick={() => setInquiryOpen(false)} className="rounded-md px-2 py-1 text-muted-foreground hover:bg-muted hover:text-foreground" aria-label="Close inquiry form">✕</button>
+              <h2 className="text-xl font-bold text-foreground">
+                Send Inquiry
+              </h2>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setInquiryOpen(false)
+                }
+                className="rounded-md px-2 py-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                aria-label="Close inquiry form"
+              >
+                ✕
+              </button>
             </div>
-            <p className="mb-5 text-sm text-muted-foreground">Interested in this property? Send your inquiry to EstateDirect.</p>
+
+            <p className="mb-5 text-sm text-muted-foreground">
+              Interested in this property? Send your inquiry to EstateDirect.
+            </p>
+
             <div className="space-y-3">
               <input
-  type="text"
-  placeholder="Your name"
-  value={inquiryName}
-  onChange={(e) => setInquiryName(e.target.value)}
-  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
-/>
+                type="text"
+                placeholder="Your name"
+                value={inquiryName}
+                onChange={(e) =>
+                  setInquiryName(
+                    e.target.value,
+                  )
+                }
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
+              />
+
               <input
-  type="email"
-  placeholder="Your email"
-  value={inquiryEmail}
-  onChange={(e) => setInquiryEmail(e.target.value)}
-  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
-/>
-<input
-  type="tel"
-  placeholder="Your phone number"
-  value={inquiryPhone}
-  onChange={(e) => setInquiryPhone(e.target.value)}
-  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
-/>
+                type="email"
+                placeholder="Your email"
+                value={inquiryEmail}
+                onChange={(e) =>
+                  setInquiryEmail(
+                    e.target.value,
+                  )
+                }
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
+              />
+
+              <input
+                type="tel"
+                placeholder="Your phone number"
+                value={inquiryPhone}
+                onChange={(e) =>
+                  setInquiryPhone(
+                    e.target.value,
+                  )
+                }
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
+              />
+
               <textarea
-  placeholder="Write your message..."
-  rows={4}
-  value={inquiryMessage}
-  onChange={(e) => setInquiryMessage(e.target.value)}
-  className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
-/>
-        <Button
-  type="button"
-  className="w-full"
-  onClick={async () => {
-    try {
-      await createInquiry({
-        propertyId: property._id,
-        name: inquiryName,
-        email: inquiryEmail,
-        phone: inquiryPhone,
-        message: inquiryMessage,
-      });
+                placeholder="Write your message..."
+                rows={4}
+                value={inquiryMessage}
+                onChange={(e) =>
+                  setInquiryMessage(
+                    e.target.value,
+                  )
+                }
+                className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
+              />
 
-      setInquiryName("");
-      setInquiryEmail("");
-      setInquiryPhone("");
-      setInquiryMessage("");
-      setInquiryOpen(false);
+              <Button
+                type="button"
+                className="w-full"
+                onClick={async () => {
+                  try {
+                    await createInquiry({
+                      propertyId:
+                        property._id,
+                      name: inquiryName,
+                      email:
+                        inquiryEmail,
+                      phone:
+                        inquiryPhone,
+                      message:
+                        inquiryMessage,
+                    });
 
-      alert("Inquiry sent successfully!");
-    } catch (error) {
-      console.error(error);
-      alert(
-        error instanceof Error
-          ? error.message
-          : "Failed to send inquiry",
-      );
-    }
-  }}
->
-  Send Inquiry
-</Button>
+                    setInquiryName("");
+                    setInquiryEmail("");
+                    setInquiryPhone("");
+                    setInquiryMessage("");
+                    setInquiryOpen(false);
+
+                    alert(
+                      "Inquiry sent successfully!",
+                    );
+                  } catch (error) {
+                    console.error(
+                      error,
+                    );
+
+                    alert(
+                      error instanceof
+                        Error
+                        ? error.message
+                        : "Failed to send inquiry",
+                    );
+                  }
+                }}
+              >
+                Send Inquiry
+              </Button>
             </div>
           </div>
         </div>

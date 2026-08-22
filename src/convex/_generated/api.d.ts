@@ -16,6 +16,7 @@ import type * as http from "../http.js";
 import type * as inquiries from "../inquiries.js";
 import type * as profile from "../profile.js";
 import type * as properties from "../properties.js";
+import type * as rateLimiter from "../rateLimiter.js";
 import type * as seed from "../seed.js";
 import type * as storage from "../storage.js";
 import type * as users from "../users.js";
@@ -35,6 +36,7 @@ declare const fullApi: ApiFromModules<{
   inquiries: typeof inquiries;
   profile: typeof profile;
   properties: typeof properties;
+  rateLimiter: typeof rateLimiter;
   seed: typeof seed;
   storage: typeof storage;
   users: typeof users;
@@ -66,4 +68,6 @@ export declare const internal: FilterApi<
   FunctionReference<any, "internal">
 >;
 
-export declare const components: {};
+export declare const components: {
+  rateLimiter: import("@convex-dev/rate-limiter/_generated/component.js").ComponentApi<"rateLimiter">;
+};
