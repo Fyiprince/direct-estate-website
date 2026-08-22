@@ -38,11 +38,11 @@ export function SiteFooter() {
             </div>
             <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
               India's broker-free property marketplace. Owners list directly,
-              renters connect directly — zero brokerage, always.
+              renters connect directly — Minimum brokerage, always.
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
               <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 border border-amber-200">
-                <Handshake className="h-3 w-3" /> 0% brokerage
+                <Handshake className="h-3 w-3" /> Minimum brokerage
               </span>
               <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 border border-blue-200">
                 <ShieldCheck className="h-3 w-3" /> Verified owners
@@ -161,7 +161,7 @@ export function SiteFooter() {
           <p>© {new Date().getFullYear()} EstateDirect. All rights reserved.</p>
           <p className="text-center">
             Built for a broker-free India · {CITIES.length} cities ·{" "}
-            <span className="text-primary font-medium">0% brokerage</span> always
+            <span className="text-primary font-medium">Minimum brokerage</span> 
           </p>
         </div>
       </div>

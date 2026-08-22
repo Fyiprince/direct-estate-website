@@ -58,18 +58,18 @@ const STEPS = [
   {
     icon: <Phone className="h-6 w-6" />,
     title: "Connect Directly",
-    desc: "Contact the owner instantly — no agents, no middlemen, no brokerage fees.",
+    desc: "Contact the owner instantly — no agents, no middlemen, Minimum brokerage fees.",
   },
   {
     icon: <Handshake className="h-6 w-6" />,
     title: "Move In",
-    desc: "Finalise the deal directly with the owner and move into your new home. Zero brokerage, always.",
+    desc: "Finalise the deal directly with the owner and move into your new home. Minimum brokerage, always.",
   },
 ];
 
 const TRUST_POINTS = [
   { icon: ShieldCheck, label: "Verified owner badges", desc: "Identity-verified property owners" },
-  { icon: Handshake, label: "Zero brokerage", desc: "Direct owner-to-renter connection" },
+  { icon: Handshake, label: "Minimum brokerage", desc: "Direct connection" },
   { icon: Phone, label: "Direct contact", desc: "No middleman, no hidden charges" },
   { icon: CheckCircle2, label: "Admin-moderated", desc: "Every listing reviewed before going live" },
 ];
@@ -138,11 +138,11 @@ export default function Landing() {
           >
             <Badge className="mb-4 bg-amber-500/20 text-amber-200 border-amber-400/30 px-3 py-1 text-xs font-medium">
               <Handshake className="mr-1.5 h-3.5 w-3.5" />
-              Zero brokerage marketplace
+              Minimum  brokerage marketplace
             </Badge>
             <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl">
-              Rent & buy directly from{" "}
-              <span className="text-amber-400">owners</span>
+              Rent & buy directly
+              <span className="text-amber-400"></span>
             </h1>
             <p className="mx-auto mt-4 max-w-2xl text-lg text-blue-200/80">
               No brokers. No commissions. Just thousands of verified owners
@@ -252,7 +252,7 @@ export default function Landing() {
             {[
               { value: stats?.total ?? "—", label: "Properties listed", prefix: "", icon: Building2 },
               { value: stats?.verifiedProperties ?? "—", label: "Verified owners", prefix: "", icon: ShieldCheck },
-              { value: "0%", label: "Brokerage charged", prefix: "", icon: Handshake },
+              { value: "Minimum", label: "Brokerage charged", prefix: "", icon: Handshake },
               { value: CITIES.length, label: "Cities covered", prefix: "", icon: MapPin },
             ].map((item) => (
               <div key={item.label} className="flex flex-col items-center gap-1.5 text-center">
@@ -269,13 +269,13 @@ export default function Landing() {
           {/* Social proof bar */}
           <div className="mt-6 pt-4 border-t border-blue-800/50 flex flex-wrap justify-center gap-x-8 gap-y-2 text-center">
             <span className="text-xs text-blue-300">
-              <span className="font-semibold text-amber-300">₹{stats?.totalViews ? ((stats.totalViews * 120).toLocaleString("en-IN")) : "1.2 Cr+"}</span> brokerage saved by renters
+            
             </span>
             <span className="text-xs text-blue-300">
-              <span className="font-semibold text-amber-300">{stats?.total ? (stats.total * 15).toLocaleString("en-IN") : "30 L+"}</span> owners connected monthly
+          
             </span>
             <span className="text-xs text-blue-300">
-              <span className="font-semibold text-amber-300">4.8</span> ⭐ average rating
+              
             </span>
           </div>
         </div>
@@ -399,7 +399,7 @@ export default function Landing() {
             How it works
           </h2>
           <p className="mt-1 text-center text-sm text-muted-foreground">
-            Three simple steps to your new home — zero brokerage
+            Three simple steps to your new home — minimum brokerage
           </p>
           <div className="mt-10 grid gap-6 sm:grid-cols-3">
             {STEPS.map((step, i) => (
@@ -455,10 +455,10 @@ export default function Landing() {
       <section className="bg-gradient-to-r from-blue-800 to-blue-700 py-12 sm:py-16">
         <div className="mx-auto max-w-4xl px-4 text-center">
           <h2 className="text-2xl font-bold text-white sm:text-3xl">
-            Own a property? List it free — 0% brokerage, always
+            Own a property? List it free 
           </h2>
           <p className="mt-2 text-blue-200/80">
-            Join {stats?.total ? new Intl.NumberFormat("en-IN").format(stats.total * 3 + 4000) : "thousands of"} owners who list directly
+            
           </p>
           <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
             <Button

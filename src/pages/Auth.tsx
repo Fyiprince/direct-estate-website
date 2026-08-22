@@ -1,7 +1,7 @@
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useAuth } from "@/hooks/use-auth";
-import logo from "@/assets/logo.svg";
+import logo from "@/assets/logo.png";
 import { Button } from "@/components/ui/button";
 import {
   Card,
