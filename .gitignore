@@ -3,3 +3,13 @@ node_modules
 dist
 src/convex/_generated
 .auth-keys.json
+# Electron build output
+release/
+
+# Dependencies
+node_modules/
+
+# Environment secrets
+.env
+.env.local
+.env.*.local

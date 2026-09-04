@@ -1,7 +1,7 @@
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useAuth } from "@/hooks/use-auth";
-import logo from "@/assets/logo.png";
+
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -226,14 +226,15 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
                 <CardHeader className="text-center">
                   <div className="flex justify-center">
                     <img
-                      src="/estate-direct-icon.png"
-                      alt="Lock Icon"
-                      width={64}
-                      height={64}
-                      className="rounded-lg mb-4 mt-4 cursor-pointer"
-                      onClick={() => navigate("/")}
-                    />
-                  </div>
+  src={`${import.meta.env.BASE_URL}logo.png`}
+  alt="EstateDirect Logo"
+  width={64}
+  height={64}
+  className="rounded-lg mb-4 mt-4 cursor-pointer object-contain"
+  onClick={() => navigate("/")}
+/>
+                   
+                  </div>  
                   <CardTitle className="text-xl">Get Started</CardTitle>
                   <CardDescription>
                     {method === "phone"
