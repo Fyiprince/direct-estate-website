@@ -16,6 +16,7 @@ import type * as http from "../http.js";
 import type * as inquiries from "../inquiries.js";
 import type * as profile from "../profile.js";
 import type * as properties from "../properties.js";
+import type * as propertyRequirements from "../propertyRequirements.js";
 import type * as rateLimiter from "../rateLimiter.js";
 import type * as seed from "../seed.js";
 import type * as storage from "../storage.js";
@@ -36,6 +37,7 @@ declare const fullApi: ApiFromModules<{
   inquiries: typeof inquiries;
   profile: typeof profile;
   properties: typeof properties;
+  propertyRequirements: typeof propertyRequirements;
   rateLimiter: typeof rateLimiter;
   seed: typeof seed;
   storage: typeof storage;

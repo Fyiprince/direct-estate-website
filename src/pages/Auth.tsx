@@ -27,7 +27,7 @@ import {
   Building2,
   Search,
 } from "lucide-react";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 
 interface AuthProps {
@@ -68,6 +68,9 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
   const setRole = useMutation(api.profile.setRole);
   const claimAdmin = useMutation(api.profile.claimAdmin);
   const setPhone = useMutation(api.profile.setPhone);
+  const [shouldClaimAdmin, setShouldClaimAdmin] = useState(false);
+  const [verifiedPhone, setVerifiedPhone] = useState<string | null>(null);
+  const claimAttemptedRef = useRef(false);
 
   // Existing admins skip the role picker and go straight to the approval queue.
   useEffect(() => {
@@ -156,26 +159,15 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
       await signIn(provider, formData);
       setIsLoading(false);
 
-      // If this email is in the admin allowlist, promote the account and
-      // land directly on the pending-approval queue.
-      try {
-        await claimAdmin();
-        navigate("/admin");
-        return;
-      } catch {
-        // Not an admin — fall through below.
-      }
-
-      // Phone sign-in verifies the number — persist it as the contact phone
-      // so admins can reach owners who list property.
+      // Wait for the Convex auth state to become available before trying
+      // to claim admin access. Calling claimAdmin() immediately after
+      // signIn() can race with the auth session being established.
       if (typeof step === "object" && step.method === "phone") {
-        try {
-          await setPhone({ phone: step.phone });
-        } catch (err) {
-          console.error("Failed to save phone number:", err);
-        }
+        setVerifiedPhone(step.phone);
+      } else {
+        setVerifiedPhone(null);
       }
-      setStep("role");
+      setShouldClaimAdmin(true);
     } catch (error) {
       console.error("OTP verification error:", error);
       setError("The verification code you entered is incorrect.");
@@ -183,6 +175,50 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
       setOtp("");
     }
   };
+
+  useEffect(() => {
+    if (
+      !shouldClaimAdmin ||
+      authLoading ||
+      !isAuthenticated ||
+      !user ||
+      claimAttemptedRef.current
+    ) {
+      return;
+    }
+
+    claimAttemptedRef.current = true;
+
+    const claim = async () => {
+      try {
+        await claimAdmin();
+        navigate("/admin");
+        return;
+      } catch {
+        // Not an admin — continue with the normal role-selection flow.
+        if (verifiedPhone) {
+          try {
+            await setPhone({ phone: verifiedPhone });
+          } catch (err) {
+            console.error("Failed to save phone number:", err);
+          }
+        }
+        setShouldClaimAdmin(false);
+        setStep("role");
+      }
+    };
+
+    void claim();
+  }, [
+    shouldClaimAdmin,
+    authLoading,
+    isAuthenticated,
+    user,
+    claimAdmin,
+    navigate,
+    verifiedPhone,
+    setPhone,
+  ]);
 
   const handleGuestLogin = async () => {
     setIsLoading(true);

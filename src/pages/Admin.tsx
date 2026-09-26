@@ -91,6 +91,13 @@ export default function Admin() {
   const inquiries = useQuery(api.inquiries.listForAdmin, {});
   const updateInquiryStatus = useMutation(api.inquiries.updateStatus);
 
+  // Property requirements - admin only
+  const requirements = useQuery(api.propertyRequirements.allRequirements);
+  const updateRequirementStatus = useMutation(
+    api.propertyRequirements.updateStatus,
+  );
+ 
+
   const [tab, setTab] = useState<StatusTab>("pending");
   const [expanded, setExpanded] = useState<string | null>(null);
   const [acting, setActing] = useState<string | null>(null);
@@ -173,6 +180,30 @@ export default function Admin() {
     }
   };
 
+  const handleRequirementStatus = async (
+    id: Id<"propertyRequirements">,
+    status: "contacted" | "closed",
+  ) => {
+    try {
+      await updateRequirementStatus({
+        id,
+        status,
+      });
+
+      toast.success(
+        status === "contacted"
+          ? "Requirement marked as contacted"
+          : "Requirement closed",
+      );
+    } catch (err) {
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : "Failed to update requirement",
+      );
+    }
+  };
+
   const filtered =
     listings === undefined
       ? undefined
@@ -201,19 +232,28 @@ export default function Admin() {
     className="relative"
     onClick={() => {
       document
-        .getElementById("customer-inquiries")
+        .getElementById("property-requirements")
         ?.scrollIntoView({ behavior: "smooth" });
     }}
     aria-label="Customer inquiries"
   >
     <Bell className="h-4 w-4" />
 
-    {inquiries &&
-      inquiries.filter((inquiry) => inquiry.status === "new").length > 0 && (
-        <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">
-          {inquiries.filter((inquiry) => inquiry.status === "new").length}
-        </span>
-      )}
+    {((inquiries?.filter(
+      (inquiry) => inquiry.status === "new",
+    ).length ?? 0) +
+      (requirements?.filter(
+        (requirement) => requirement.status === "new",
+      ).length ?? 0)) > 0 && (
+      <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">
+        {(inquiries?.filter(
+          (inquiry) => inquiry.status === "new",
+        ).length ?? 0) +
+          (requirements?.filter(
+            (requirement) => requirement.status === "new",
+          ).length ?? 0)}
+      </span>
+    )}
   </Button>
 
   <Button
@@ -370,8 +410,7 @@ export default function Admin() {
         </Card>
 
         {/* Customer Inquiries */}
-        <Card id="customer-inquiries" className="mt-6"></Card>
-        <Card className="mt-6">
+        <Card id="customer-inquiries" className="mt-6">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
@@ -526,6 +565,286 @@ export default function Admin() {
                           </Button>
                         )}
                       </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Property Requirements */}
+        <Card id="property-requirements" className="mt-6">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-foreground">
+                  Property Requirements
+                </h2>
+
+                <p className="text-sm text-muted-foreground">
+                  Requirements submitted by customers from their dashboard
+                </p>
+              </div>
+
+              {requirements && (
+                <div className="flex items-center gap-2">
+                  {requirements.filter(
+                    (requirement) => requirement.status === "new",
+                  ).length > 0 && (
+                    <Badge className="border-red-200 bg-red-100 text-red-700">
+                      {
+                        requirements.filter(
+                          (requirement) => requirement.status === "new",
+                        ).length
+                      }{" "}
+                      new
+                    </Badge>
+                  )}
+
+                  <Badge variant="outline">
+                    {requirements.length} total
+                  </Badge>
+                </div>
+              )}
+            </div>
+          </CardHeader>
+
+          <CardContent>
+            {requirements === undefined ? (
+              <div className="space-y-3">
+                <Skeleton className="h-32 w-full" />
+                <Skeleton className="h-32 w-full" />
+              </div>
+            ) : requirements.length === 0 ? (
+              <div className="py-10 text-center">
+                <p className="font-medium text-foreground">
+                  No property requirements yet
+                </p>
+
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Customer requirements will appear here when submitted.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {requirements.map((requirement) => (
+                  <div
+                    key={requirement._id}
+                    className="rounded-xl border border-border/60 p-4"
+                  >
+                    <div className="flex flex-col gap-4">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h3 className="font-semibold text-foreground">
+                              {requirement.customer?.name ??
+                                "Unknown Customer"}
+                            </h3>
+
+                            <Badge
+                              variant="outline"
+                              className={cn(
+                                requirement.status === "new" &&
+                                  "border-blue-200 bg-blue-50 text-blue-700",
+                                requirement.status === "contacted" &&
+                                  "border-amber-200 bg-amber-50 text-amber-700",
+                                requirement.status === "closed" &&
+                                  "border-emerald-200 bg-emerald-50 text-emerald-700",
+                              )}
+                            >
+                              {requirement.status}
+                            </Badge>
+                          </div>
+
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            Submitted{" "}
+                            {new Date(
+                              requirement.createdAt,
+                            ).toLocaleString("en-IN", {
+                              dateStyle: "medium",
+                              timeStyle: "short",
+                            })}
+                          </p>
+                        </div>
+
+                        <div className="flex shrink-0 gap-2">
+                          {requirement.status === "new" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                handleRequirementStatus(
+                                  requirement._id,
+                                  "contacted",
+                                )
+                              }
+                            >
+                              Mark contacted
+                            </Button>
+                          )}
+
+                          {requirement.status === "contacted" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                handleRequirementStatus(
+                                  requirement._id,
+                                  "closed",
+                                )
+                              }
+                            >
+                              Close
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+
+                      <Separator />
+
+                      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        <div>
+                          <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                            Requirement
+                          </p>
+
+                          <p className="mt-1 text-sm font-semibold text-foreground capitalize">
+                            {requirement.listingFor}
+                          </p>
+                        </div>
+
+                        <div>
+                          <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                            Property Type
+                          </p>
+
+                          <p className="mt-1 text-sm font-semibold text-foreground capitalize">
+                            {requirement.propertyType}
+                          </p>
+                        </div>
+
+                        <div>
+                          <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                            Location
+                          </p>
+
+                          <p className="mt-1 text-sm font-semibold text-foreground">
+                            {requirement.location}
+                          </p>
+                        </div>
+
+                        <div>
+                          <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                            Budget
+                          </p>
+
+                          <p className="mt-1 text-sm font-semibold text-foreground">
+                            {formatINR(requirement.budget)}
+                            {requirement.listingFor === "rent" &&
+                              " / month"}
+                          </p>
+                        </div>
+
+                        {requirement.bhk != null && (
+                          <div>
+                            <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                              BHK
+                            </p>
+
+                            <p className="mt-1 text-sm font-semibold text-foreground">
+                              {requirement.bhk} BHK
+                            </p>
+                          </div>
+                        )}
+
+                        {requirement.areaSqFt != null && (
+                          <div>
+                            <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                              Required Area
+                            </p>
+
+                            <p className="mt-1 text-sm font-semibold text-foreground">
+                              {requirement.areaSqFt.toLocaleString("en-IN")} sq ft
+                            </p>
+                          </div>
+                        )}
+
+                        {requirement.furnishing && (
+                          <div>
+                            <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                              Furnishing
+                            </p>
+
+                            <p className="mt-1 text-sm font-semibold text-foreground capitalize">
+                              {requirement.furnishing.replace(
+                                "_",
+                                " ",
+                              )}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
+                      <Separator />
+
+                      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        <div className="flex items-center gap-2">
+                          <Phone className="h-4 w-4 text-muted-foreground" />
+
+                          <div>
+                            <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                              Phone
+                            </p>
+
+                            <p className="text-sm font-medium text-foreground">
+                              {requirement.phone ||
+                                requirement.customer?.phone ||
+                                "—"}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <Mail className="h-4 w-4 text-muted-foreground" />
+
+                          <div>
+                            <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                              Email
+                            </p>
+
+                            <p className="text-sm font-medium text-foreground">
+                              {requirement.customer?.email ?? "—"}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div>
+                          <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                            Customer ID
+                          </p>
+
+                          <p className="mt-1 truncate text-xs text-muted-foreground">
+                            {requirement.customerId}
+                          </p>
+                        </div>
+                      </div>
+
+                      {requirement.message && (
+                        <>
+                          <Separator />
+
+                          <div>
+                            <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                              Message
+                            </p>
+
+                            <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-foreground">
+                              {requirement.message}
+                            </p>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                 ))}

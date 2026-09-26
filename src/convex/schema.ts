@@ -15,6 +15,7 @@ export const roleValidator = v.union(
   v.literal(ROLES.OWNER),
   v.literal(ROLES.TENANT),
 );
+
 export type Role = Infer<typeof roleValidator>;
 
 // --- Property enums (shared with the client via lib/property.ts) ---
@@ -30,14 +31,34 @@ export const PROPERTY_TYPES = [
 export const propertyTypeValidator = v.union(
   ...PROPERTY_TYPES.map((t) => v.literal(t)),
 );
+
 export type PropertyType = Infer<typeof propertyTypeValidator>;
 
+// Existing property listings use only rent/sale.
+// DO NOT add "buy" here because this is used by the properties table.
 export const LISTING_FOR = ["rent", "sale"] as const;
 
 export const listingForValidator = v.union(
   ...LISTING_FOR.map((t) => v.literal(t)),
 );
+
 export type ListingFor = Infer<typeof listingForValidator>;
+
+// Property requirement options are different from property listings.
+// A customer can either want to Rent, Buy, or Sale.
+export const REQUIREMENT_FOR = [
+  "rent",
+  "buy",
+  "sale",
+] as const;
+
+export const requirementForValidator = v.union(
+  ...REQUIREMENT_FOR.map((t) => v.literal(t)),
+);
+
+export type RequirementFor = Infer<
+  typeof requirementForValidator
+>;
 
 export const FURNISHING = [
   "furnished",
@@ -48,6 +69,7 @@ export const FURNISHING = [
 export const furnishingValidator = v.union(
   ...FURNISHING.map((t) => v.literal(t)),
 );
+
 export type Furnishing = Infer<typeof furnishingValidator>;
 
 export const LISTING_STATUS = [
@@ -60,7 +82,10 @@ export const LISTING_STATUS = [
 export const listingStatusValidator = v.union(
   ...LISTING_STATUS.map((t) => v.literal(t)),
 );
-export type ListingStatus = Infer<typeof listingStatusValidator>;
+
+export type ListingStatus = Infer<
+  typeof listingStatusValidator
+>;
 
 export const SORT_OPTIONS = [
   "newest",
@@ -94,25 +119,38 @@ const schema = defineSchema(
 
     properties: defineTable({
       ownerId: v.id("users"),
+
       title: v.string(),
       description: v.optional(v.string()),
+
       type: propertyTypeValidator,
+
+      // Existing property listings:
+      // rent or sale
       listingFor: listingForValidator,
+
       city: v.string(),
       locality: v.string(),
       address: v.string(),
+
       latitude: v.optional(v.number()),
       longitude: v.optional(v.number()),
+
       bhk: v.optional(v.number()),
       areaSqft: v.number(),
+
       furnishing: furnishingValidator,
+
       floor: v.optional(v.number()),
       totalFloors: v.optional(v.number()),
       ageOfProperty: v.optional(v.number()),
+
       price: v.number(),
       deposit: v.optional(v.number()),
       maintenance: v.optional(v.number()),
+
       negotiable: v.boolean(),
+
       amenities: v.array(v.string()),
       photos: v.array(v.string()),
       videoUrl: v.optional(v.string()),
@@ -123,10 +161,14 @@ const schema = defineSchema(
       phoneNumber: v.string(),
 
       status: listingStatusValidator,
+
       isVerified: v.boolean(),
       isFeatured: v.boolean(),
+
       viewCount: v.number(),
+
       availableFrom: v.optional(v.number()),
+
       createdAt: v.number(),
       updatedAt: v.number(),
     })
@@ -142,7 +184,48 @@ const schema = defineSchema(
       propertyId: v.id("properties"),
       visitorId: v.string(),
       createdAt: v.number(),
-    }).index("by_property_visitor", ["propertyId", "visitorId"]),
+    }).index("by_property_visitor", [
+      "propertyId",
+      "visitorId",
+    ]),
+
+    // Property requirements submitted by users from their dashboard.
+    // These are separate from property-specific inquiries.
+    propertyRequirements: defineTable({
+      customerId: v.id("users"),
+
+      // Customer requirement:
+      // rent = wants to rent
+      // buy  = wants to buy
+      // sale = wants to sell
+      listingFor: requirementForValidator,
+
+      propertyType: propertyTypeValidator,
+
+      location: v.string(),
+      budget: v.number(),
+      areaSqFt: v.optional(v.number()),
+
+      bhk: v.optional(v.number()),
+
+      furnishing: v.optional(
+        furnishingValidator,
+      ),
+
+      phone: v.string(),
+      message: v.optional(v.string()),
+
+      status: v.union(
+        v.literal("new"),
+        v.literal("contacted"),
+        v.literal("closed"),
+      ),
+
+      createdAt: v.number(),
+      updatedAt: v.number(),
+    })
+      .index("by_customer", ["customerId"])
+      .index("by_status", ["status"]),
 
     inquiries: defineTable({
       propertyId: v.id("properties"),
