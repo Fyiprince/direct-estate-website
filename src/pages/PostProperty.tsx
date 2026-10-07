@@ -5,6 +5,7 @@ import { useState, useCallback, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
+import type { Id } from "@/convex/_generated/dataModel";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -109,13 +110,13 @@ export default function PostProperty() {
     api.properties.updateProperty,
   );
 
+  const propertyId = editId
+    ? (editId as Id<"properties">)
+    : null;
+
   const existingProperty = useQuery(
     api.properties.get,
-    editId
-      ? {
-          id: editId as any,
-        }
-      : "skip",
+    propertyId ? { id: propertyId } : "skip",
   );
 
   const generateUploadUrl = useMutation(
@@ -517,7 +518,7 @@ export default function PostProperty() {
 
       if (editId) {
         await updateProperty({
-          id: editId as any,
+          id: editId as Id<"properties">,
           input: parsed.data,
         });
 

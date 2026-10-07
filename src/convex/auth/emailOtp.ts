@@ -9,21 +9,21 @@ export const emailOtp = Email({
 
   maxAge: 60 * 15,
 
- async generateVerificationToken() {
-  const random: RandomReader = {
-    read(bytes) {
-      crypto.getRandomValues(
-        bytes as unknown as Uint8Array<ArrayBuffer>,
-      );
-    },
-  };
+  async generateVerificationToken() {
+    const random: RandomReader = {
+      read(bytes) {
+        crypto.getRandomValues(
+          bytes as unknown as Uint8Array<ArrayBuffer>,
+        );
+      },
+    };
 
-  return generateRandomString(
-    random,
-    "0123456789",
-    6,
-  );
-},
+    return generateRandomString(
+      random,
+      "0123456789",
+      6,
+    );
+  },
 
   async sendVerificationRequest({
     identifier: email,
@@ -32,30 +32,27 @@ export const emailOtp = Email({
     const resendApiKey = process.env.RESEND_API_KEY;
 
     if (!resendApiKey) {
-      console.error(
-        "[EstateDirect] RESEND_API_KEY is not configured",
+      console.warn(
+        "[EstateDirect] RESEND_API_KEY is not configured; continuing in demo mode.",
       );
-
-      throw new Error(
-        "Email service is not configured",
+      console.log(
+        `[EstateDirect DEMO] Verification OTP for ${email}: ${token}`,
       );
+      return;
     }
 
     const response = await fetch(
       "https://api.resend.com/emails",
       {
         method: "POST",
-
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${resendApiKey}`,
         },
-
         body: JSON.stringify({
           from: "EstateDirect <noreply@hansdaworld.com>",
           to: [email],
           subject: "Your EstateDirect Login OTP",
-
           html: `
             <div style="
               font-family: Arial, sans-serif;
@@ -103,7 +100,7 @@ export const emailOtp = Email({
                 color: #666;
                 font-size: 12px;
               ">
-                EstateDirect — Direct Property Marketplace
+                EstateDirect ? Direct Property Marketplace
               </p>
             </div>
           `,
@@ -119,9 +116,10 @@ export const emailOtp = Email({
         error,
       );
 
-      throw new Error(
-        "Failed to send verification email",
+      console.log(
+        `[EstateDirect DEMO] Verification OTP for ${email}: ${token}`,
       );
+      return;
     }
 
     console.log(

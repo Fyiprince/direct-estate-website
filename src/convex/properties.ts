@@ -153,10 +153,16 @@ function toPublicProperty(
   owner: OwnerSummary | null,
 ): PublicProperty {
   const {
-    phoneNumber: _phoneNumber,
-    ownerId: _ownerId,
+    phoneNumber,
+    ownerId,
     ...safeProperty
-  } = property;
+  } = property as typeof property & {
+    phoneNumber?: string;
+    ownerId?: string;
+  };
+
+  void phoneNumber;
+  void ownerId;
 
   return {
     ...safeProperty,

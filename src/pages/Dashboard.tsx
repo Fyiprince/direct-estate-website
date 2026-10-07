@@ -43,7 +43,6 @@ import {
   Trash2,
   LayoutDashboard,
   ChevronRight,
-  TrendingUp,
   CheckCircle,
   Clock,
   ArrowRight,
