@@ -7,6 +7,7 @@ import { ConvexAuthProvider } from "@convex-dev/auth/react";
 import { ConvexReactClient } from "convex/react";
 import React, { StrictMode, useEffect, lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
+import Dashboard from "./pages/Dashboard.tsx";
 import {
   HashRouter,
   Route,
@@ -18,7 +19,6 @@ import "./index.css";
 // Lazy load route components for better code splitting
 const Landing = lazy(() => import("./pages/Landing.tsx"));
 const AuthPage = lazy(() => import("./pages/Auth.tsx"));
-const Dashboard = lazy(() => import("./pages/Dashboard.tsx"));
 const SearchPage = lazy(() => import("./pages/Search.tsx"));
 const PropertyDetail = lazy(() => import("./pages/PropertyDetail.tsx"));
 const PostProperty = lazy(() => import("./pages/PostProperty.tsx"));
