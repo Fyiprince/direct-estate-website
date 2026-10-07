@@ -32,13 +32,10 @@ export const emailOtp = Email({
     const resendApiKey = process.env.RESEND_API_KEY;
 
     if (!resendApiKey) {
-      console.warn(
-        "[EstateDirect] RESEND_API_KEY is not configured; continuing in demo mode.",
+      console.error(
+        "[EstateDirect] RESEND_API_KEY is not configured",
       );
-      console.log(
-        `[EstateDirect DEMO] Verification OTP for ${email}: ${token}`,
-      );
-      return;
+      throw new Error("Email service is not configured");
     }
 
     const response = await fetch(
@@ -109,17 +106,11 @@ export const emailOtp = Email({
     );
 
     if (!response.ok) {
-      const error = await response.text();
-
       console.error(
-        "[EstateDirect] Resend email failed:",
-        error,
+        "[EstateDirect] Resend email request failed with status:",
+        response.status,
       );
-
-      console.log(
-        `[EstateDirect DEMO] Verification OTP for ${email}: ${token}`,
-      );
-      return;
+      throw new Error("Failed to send verification email");
     }
 
     console.log(
