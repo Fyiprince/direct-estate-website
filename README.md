@@ -62,6 +62,10 @@ Never put `RESEND_API_KEY` in a `VITE_` variable or expose it in frontend
 configuration. Setting a variable only in Hostinger does not configure the
 Convex backend.
 
+The static site also ships an Apache `.htaccess` rule that prevents stale
+`index.html` caching. This avoids old HTML bundles requesting hashed JavaScript
+chunks that were removed by a newer deployment.
+
 
 # Using Authentication (Important!)
 
