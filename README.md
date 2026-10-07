@@ -23,11 +23,44 @@ This project is set up already and running on a cloud environment, as well as a 
 
 ## Environment Variables
 
-The project is set up with project specific CONVEX_DEPLOYMENT and VITE_CONVEX_URL environment variables on the client side.
+The project is set up with project-specific `CONVEX_DEPLOYMENT` and
+`VITE_CONVEX_URL` environment variables. `VITE_CONVEX_URL` is embedded into the
+static frontend at build time and must point to the Convex deployment's
+`convex.cloud` URL.
 
-The convex server has a separate set of environment variables that are accessible by the convex backend.
+The Convex server has a separate set of environment variables that are
+accessible by the Convex backend. These are not supplied by Hostinger's static
+frontend hosting.
 
-Currently, these variables include auth-specific keys: JWKS, JWT_PRIVATE_KEY, and SITE_URL.
+Convex Auth uses deployment auth settings such as `JWKS`, `JWT_PRIVATE_KEY`,
+`CONVEX_SITE_URL` (the Convex `.convex.site` URL), and `SITE_URL` (the public
+frontend origin used for redirects). Email OTP additionally requires
+`RESEND_API_KEY` on the Convex deployment. The email provider sends from
+`noreply@hansdaworld.com`, so that sender domain must be verified in Resend.
+
+### Production email sign-in (Hostinger + Convex)
+
+If email sign-in shows a Convex `auth:signIn` server error, check the
+**production Convex deployment** (not only Hostinger):
+
+1. In the Convex dashboard, open the production deployment used by the live
+   site and add `SITE_URL` with the exact public site origin, for example
+   `https://your-domain.com` (no path or trailing slash). Do not use the
+   `convex.cloud` or `convex.site` URL for this value.
+2. Confirm `RESEND_API_KEY` is also set under that deployment's environment
+   variables.
+3. In Resend, verify `hansdaworld.com` as a sending domain and complete its
+   required DNS records. The configured sender must belong to a verified
+   domain.
+4. Confirm Hostinger builds the frontend with `VITE_CONVEX_URL` set to that
+   same production deployment's `convex.cloud` URL, then rebuild and redeploy
+   the static site if that value changed.
+5. Retry email sign-in and check the Convex deployment logs for the matching
+   request if it still fails.
+
+Never put `RESEND_API_KEY` in a `VITE_` variable or expose it in frontend
+configuration. Setting a variable only in Hostinger does not configure the
+Convex backend.
 
 
 # Using Authentication (Important!)

@@ -170,7 +170,11 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
       setShouldClaimAdmin(true);
     } catch (error) {
       console.error("OTP verification error:", error);
-      setError("The verification code you entered is incorrect.");
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Could not verify the code. Please request a new one and try again.",
+      );
       setIsLoading(false);
       setOtp("");
     }
