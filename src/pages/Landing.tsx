@@ -145,7 +145,7 @@ export default function Landing() {
               <span className="text-amber-400"></span>
             </h1>
             <p className="mx-auto mt-4 max-w-2xl text-lg text-blue-200/80">
-              No brokers. No commissions. Just thousands of verified owners
+              Minimum brokers. Minimum commissions. Just thousands of verified owners
               listing their properties directly — connect with a tap.
             </p>
           </motion.div>
